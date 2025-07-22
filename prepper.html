@@ -1,0 +1,1721 @@
+<!-- 
+GNU GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2025 GeoRoots
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">GeoRoots Prepper - EU Deforestation Regulation GeoJSON Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .language-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px; /* Space below selector */
+        }
+
+        .language-selector:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .language-selector select {
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: white; /* Changed color for header */
+            cursor: pointer;
+            outline: none;
+        }
+
+        .language-selector select option {
+            background: #333; /* Darker background for dropdown options */
+            color: white;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #999 0%, #888 100%);
+            color: white;
+            padding: 20px 30px 30px 30px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center main content */
+            position: relative;
+        }
+        
+        .header-content {
+            width: 100%;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-success {
+            background: #58b775;
+        }
+
+        .btn-success:hover {
+            background: #48a765;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-danger {
+            background: #dc6575;
+        }
+
+        .btn-danger:hover {
+            background: #cc5565;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-secondary {
+            background: #7c858d;
+        }
+
+        .btn-secondary:hover {
+            background: #6c757d;
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        .spreadsheet-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .spreadsheet {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .spreadsheet th {
+            background: linear-gradient(135deg, #aaa 0%, #999 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            border-right: 1px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .spreadsheet th:last-child {
+            border-right: none;
+        }
+
+        .spreadsheet td {
+            padding: 0;
+            border: 1px solid #dee2e6;
+            position: relative;
+        }
+
+        .spreadsheet tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .spreadsheet tr:hover {
+            background: #e3f2fd;
+        }
+
+        .cell-input {
+            width: 100%;
+            height: 40px;
+            border: none;
+            padding: 8px 12px;
+            font-size: 14px;
+            background: transparent;
+            outline: none;
+            resize: none;
+            transition: all 0.2s ease;
+        }
+
+        .cell-input:focus {
+            background: #fff3cd;
+            box-shadow: inset 0 0 0 3px #007bff;
+        }
+
+        .cell-input.selected {
+            box-shadow: inset 0 0 0 3px #007bff;
+            background: #f0f8ff;
+        }
+
+        .cell-input.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .cell-input.error:focus {
+            box-shadow: inset 0 0 0 3px #dc3545;
+        }
+
+        .row-number {
+            background: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+            text-align: center;
+            width: 50px;
+            min-width: 50px;
+            user-select: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .row-number:hover {
+            background: #dee2e6;
+        }
+
+        .validation-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+
+        .validation-tooltip.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .validation-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 10px;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid #dc3545;
+        }
+
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 2001; /* Above loading overlay */
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+        }
+
+        .status-message.show {
+            transform: translateX(0);
+        }
+
+        .status-message.success {
+            background: #28a745;
+        }
+
+        .status-message.error {
+            background: #dc3545;
+        }
+
+        .status-message.info {
+            background: #17a2b8;
+        }
+
+        .instructions {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+		
+		.text-license {
+            font-weight: 400;
+			font-size: 0.9rem !important;
+		}
+		
+		.text-license a {
+            font-weight: 400;
+			font-size: 0.9rem !important;
+			color: white
+		}
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; /* Higher than everything else */
+            flex-direction: column;
+            color: white;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-overlay p {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007bff; /* Blue to match theme */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .col-producer-name { min-width: 150px; }
+        .col-place-ref { min-width: 120px; }
+        .col-area { min-width: 100px; }
+        .col-country { min-width: 120px; }
+        .col-lat { min-width: 100px; }
+        .col-lng { min-width: 100px; }
+        .col-polygon { min-width: 200px; }
+        .col-additional { min-width: 150px; }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px 20px 20px;
+                align-items: center; /* Center everything on mobile */
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                padding: 15px 20px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .spreadsheet-container {
+                padding: 15px;
+            }
+
+            .language-selector {
+                align-self: center; /* Center selector on mobile */
+                margin-bottom: 20px;
+            }
+        }
+		
+		/* Back to Top Button Styles */
+		#backToTopBtn {
+			display: none; /* Hidden by default */
+			position: fixed;
+			bottom: 30px;
+			right: 30px;
+			z-index: 100;
+			border: none;
+			outline: none;
+			background-color: #222;
+			color: white;
+			cursor: pointer;
+			padding: 15px;
+			border-radius: 50%;
+			font-size: 18px;
+			font-weight: bold;
+			box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+			transition: opacity 0.3s, visibility 0.3s;
+			opacity: 0;
+			visibility: hidden;
+		}
+
+		#backToTopBtn.show {
+			display: block;
+			opacity: 0.6;
+			visibility: visible;
+		}
+
+		#backToTopBtn:hover {
+			background-color: #444;
+		}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="language-selector">
+                <select id="languageSelect" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="pt">Português</option>
+                    <option value="sw">Swahili</option>
+                    <option value="zh">中文</option>
+                    <option value="th">ไทย</option>
+                    <option value="am">አማርኛ</option>
+                </select>
+            </div>
+            <div class="header-content">
+                <h1 data-i18n="title">GeoRoots Prepper</h1>
+                <p data-i18n="subtitle">EU Deforestation Regulation GeoJSON Generator</p>
+                <p class="text-license" data-i18n="downloadText">Download latest version and other tools at </p><a href="https://georoots.coffee/">https://georoots.coffee/</a>
+                <p class="text-license" data-i18n="licenseText">This software is free, released under GPLv3 open source license, see source code for full disclaimer.</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-success" onclick="exportGeoJSON()" data-i18n="exportButton">
+                Export GeoJSON
+            </button>
+            <button class="btn btn-danger" onclick="clearAllRows()" data-i18n="clearButton">
+                Clear All Rows
+            </button>
+            <button class="btn btn-secondary" onclick="insertRow()" data-i18n="insertButton">
+                Insert Row
+            </button>
+            <button class="btn btn-secondary" onclick="deleteSelectedRow()" data-i18n="deleteButton">
+                Delete Row
+            </button>
+        </div>
+
+        <div class="spreadsheet-container">
+            <table class="spreadsheet" id="dataTable">
+                <thead>
+                    <tr>
+                        <th class="row-number">#</th>
+                        <th class="col-producer-name" data-i18n="producerNameHeader">Producer Name</th>
+                        <th class="col-place-ref" data-i18n="placeRefHeader">Place Reference</th>
+                        <th class="col-area" data-i18n="areaHeader">Area [ha]</th>
+                        <th class="col-country" data-i18n="countryHeader">Country</th>
+                        <th class="col-lat" data-i18n="latHeader">Latitude</th>
+                        <th class="col-lng" data-i18n="lngHeader">Longitude</th>
+                        <th class="col-polygon" data-i18n="polygonHeader">Polygon</th>
+                        <th class="col-additional" data-i18n="additionalHeader">Additional Information</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+					<tr>
+						<td class="row-number" onclick="selectRow(this)">1</td>
+                        <td><input type="text" class="cell-input" data-col="producerName" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+						<td><input type="text" class="cell-input selected" data-col="placeRef" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+						<td><input type="text" class="cell-input" data-col="area" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+						<td><input type="text" class="cell-input" data-col="country" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+						<td><input type="text" class="cell-input" data-col="latitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+						<td><input type="text" class="cell-input" data-col="longitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+						<td><input type="text" class="cell-input" data-col="polygon" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+						<td><input type="text" class="cell-input" data-col="additional" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+					</tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="instructions">
+            <h3 data-i18n="instructionsTitle">Instructions:</h3>
+            <ul>
+                <li><strong data-i18n="pasteDataLabel">Paste Data:</strong> <span data-i18n="pasteDataText">Click on any cell and paste clipboard data (Ctrl+V). Data will fill from the selected cell onwards.</span></li>
+                <li><strong data-i18n="areaLabel">Area:</strong> <span data-i18n="areaText">Enter numeric values only (e.g., 12.5). Areas >4ha require polygon data.</span></li>
+                <li><strong data-i18n="countryLabel">Country:</strong> <span data-i18n="countryText">Use 2-letter codes only (e.g., CO, US, CN, BR).</span></li>
+                <li><strong data-i18n="coordinatesLabel">Coordinates:</strong> <span data-i18n="coordinatesText">Enter pure numbers only (e.g., -13.123, not -13.123°).</span></li>
+                <li><strong data-i18n="polygonFormatLabel">Polygon Format:</strong> <span data-i18n="polygonFormatText">Use JSON array format: [[lng,lat],[lng,lat],[lng,lat]]</span></li>
+                <li><strong data-i18n="undoLabel">Undo:</strong> <span data-i18n="undoText">Press Ctrl+Z to undo last paste.</span></li>
+                <li><strong data-i18n="exportLabel">Export:</strong> <span data-i18n="exportText">Click "Export GeoJSON" to download your data in EU deforestation regulation format.</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p id="loadingText" data-i18n="pastingData">Pasting data, please wait...</p>
+    </div>
+
+      
+	<!-- Back to Top Button -->
+	<button onclick="scrollToTop()" id="backToTopBtn" title="Go to top">↑</button>
+
+	
+    <!-- Translation Data -->
+    <script type="application/json" id="lang-en">
+    {
+        "pageTitle": "GeoRoots Prepper - EU Deforestation Regulation GeoJSON Generator",
+        "title": "GeoRoots Prepper",
+        "subtitle": "EU Deforestation Regulation GeoJSON Generator",
+        "downloadText": "Download latest version and other tools at",
+        "licenseText": "This software is free, released under GPLv3 open source license, see source code for full disclaimer.",
+        "exportButton": "Export GeoJSON",
+        "clearButton": "Clear All Rows",
+        "insertButton": "Insert Row",
+        "deleteButton": "Delete Row",
+        "producerNameHeader": "Producer Name",
+        "placeRefHeader": "Place Reference",
+        "areaHeader": "Area [ha]",
+        "countryHeader": "Country",
+        "latHeader": "Latitude",
+        "lngHeader": "Longitude",
+        "polygonHeader": "Polygon",
+        "additionalHeader": "Additional Information",
+        "instructionsTitle": "Instructions:",
+        "pasteDataLabel": "Paste Data:",
+        "pasteDataText": "Click on any cell and paste clipboard data (Ctrl+V). Data will fill from the selected cell onwards.",
+        "areaLabel": "Area:",
+        "areaText": "Enter numeric values only (e.g., 12.5). Areas >4ha require polygon data.",
+        "countryLabel": "Country:",
+        "countryText": "Use 2-letter codes only (e.g., CO, US, CN, BR).",
+        "coordinatesLabel": "Coordinates:",
+        "coordinatesText": "Enter pure numbers only (e.g., -13.123, not -13.123°).",
+        "polygonFormatLabel": "Polygon Format:",
+        "polygonFormatText": "Use JSON array format: [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "Undo:",
+        "undoText": "Press Ctrl+Z to undo last paste.",
+        "exportLabel": "Export:",
+        "exportText": "Click \"Export GeoJSON\" to download your data in EU deforestation regulation format.",
+        "noUndoState": "No undo state available!",
+        "undoSuccessful": "Undo successful!",
+        "dataPastedSuccessfully": "Data pasted successfully!",
+        "pastingData": "Pasting data, please wait...",
+        "validatingData": "Validating data, please wait...",
+        "areaNumericError": "Area must be numeric only (e.g., 12.5)",
+        "areaPolygonRequired": "Areas ≥4ha require valid polygon data",
+        "countryCodeError": "Must be 2-letter country code (e.g., CO, US, CN)",
+        "latitudeNumericError": "Latitude must be numeric only (e.g., -13.123)",
+        "latitudeRangeError": "Latitude must be between -90 and 90",
+        "longitudeNumericError": "Longitude must be numeric only (e.g., 12.456)",
+        "longitudeRangeError": "Longitude must be between -180 and 180",
+        "polygonFormatError": "Polygon must be valid JSON array: [[lng,lat],[lng,lat],...]",
+        "rowInsertedSuccessfully": "Row inserted successfully!",
+        "newRowAdded": "New row added!",
+        "rowDeletedSuccessfully": "Row deleted successfully!",
+        "cannotDeleteLastRow": "Cannot delete the last row!",
+        "pleaseSelectRowToDelete": "Please select a row to delete!",
+        "confirmClearAll": "Are you sure you want to clear all data?",
+        "allDataCleared": "All data cleared!",
+        "noValidDataToExport": "No valid data to export!",
+        "geojsonExportedWithFeatures": "GeoJSON exported with {count} features!",
+        "confirmExportWithErrors": "Found errors in {count} row(s): {rows}.\n\nThis may be due to incomplete data (e.g., missing Lat/Lng/Area) or invalid formats.\n\nDo you want to export only the valid rows?",
+        "exportCancelled": "Export cancelled by user.",
+        "geojsonExportedWithSkips": "GeoJSON exported with {count} features. {skippedCount} rows with errors were skipped."
+    }
+    </script>
+
+    <script type="application/json" id="lang-es">
+    {
+        "pageTitle": "GeoRoots Prepper – Generador de GeoJSON según la regulación de deforestación de la UE",
+        "title": "GeoRoots Prepper",
+        "subtitle": "Generador de GeoJSON según la regulación de deforestación de la UE",
+        "downloadText": "Descarga la versión más reciente y otras herramientas en",
+        "licenseText": "Este software es gratuito, bajo licencia de código abierto GPLv3; consulta el código fuente para el descargo de responsabilidad completo.",
+        "exportButton": "Exportar GeoJSON",
+        "clearButton": "Borrar todas las filas",
+        "insertButton": "Insertar fila",
+        "deleteButton": "Eliminar fila",
+        "producerNameHeader": "Nombre del Productor",
+        "placeRefHeader": "Referencia del lugar",
+        "areaHeader": "Área [ha]",
+        "countryHeader": "País",
+        "latHeader": "Latitud",
+        "lngHeader": "Longitud",
+        "polygonHeader": "Polígono",
+        "additionalHeader": "Información adicional",
+        "instructionsTitle": "Instrucciones:",
+        "pasteDataLabel": "Pegar datos:",
+        "pasteDataText": "Haz clic en cualquier celda y pega datos del portapapeles (Ctrl+V). Los datos se rellenarán a partir de la celda seleccionada.",
+        "areaLabel": "Área:",
+        "areaText": "Introduce solo valores numéricos (por ejemplo, 12.5). Las áreas >4 ha requieren datos de polígono.",
+        "countryLabel": "País:",
+        "countryText": "Usa códigos de 2 letras únicamente (por ejemplo, CO, US, CN, BR).",
+        "coordinatesLabel": "Coordenadas:",
+        "coordinatesText": "Introduce solo números puros (por ejemplo, -13.123, no -13.123°).",
+        "polygonFormatLabel": "Formato de polígono:",
+        "polygonFormatText": "Usa formato de array JSON: [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "Deshacer:",
+        "undoText": "Pulsa Ctrl+Z para deshacer el último pegado.",
+        "exportLabel": "Exportar:",
+        "exportText": "Haz clic en \"Exportar GeoJSON\" para descargar tus datos en formato de regulación de deforestación de la UE.",
+        "noUndoState": "¡No hay estado para deshacer!",
+        "undoSuccessful": "¡Deshacer completado!",
+        "dataPastedSuccessfully": "¡Datos pegados con éxito!",
+        "pastingData": "Pegando datos, por favor espere...",
+        "validatingData": "Validando datos, por favor espere...",
+        "areaNumericError": "El área debe ser solo numérica (por ejemplo, 12.5)",
+        "areaPolygonRequired": "Las áreas ≥ 4 ha requieren datos de polígono válidos",
+        "countryCodeError": "Debe ser un código de país de 2 letras (por ejemplo, CO, US, CN)",
+        "latitudeNumericError": "La latitud debe ser solo numérica (por ejemplo, -13.123)",
+        "latitudeRangeError": "La latitud debe estar entre -90 y 90",
+        "longitudeNumericError": "La longitud debe ser solo numérica (por ejemplo, 12.456)",
+        "longitudeRangeError": "La longitud debe estar entre -180 y 180",
+        "polygonFormatError": "El polígono debe ser un array JSON válido: [[lng,lat],[lng,lat],…]",
+        "rowInsertedSuccessfully": "¡Fila insertada correctamente!",
+        "newRowAdded": "¡Nueva fila añadida!",
+        "rowDeletedSuccessfully": "¡Fila eliminada correctamente!",
+        "cannotDeleteLastRow": "¡No se puede eliminar la última fila!",
+        "pleaseSelectRowToDelete": "¡Por favor selecciona una fila para eliminar!",
+        "confirmClearAll": "¿Estás seguro de que quieres borrar todos los datos?",
+        "allDataCleared": "¡Todos los datos han sido borrados!",
+        "noValidDataToExport": "¡No hay datos válidos para exportar!",
+        "geojsonExportedWithFeatures": "GeoJSON exportado con {count} elementos.",
+        "confirmExportWithErrors": "Se encontraron errores en {count} fila(s): {rows}.\n\nEsto puede deberse a datos incompletos (p. ej., falta Lat/Lng/Área) o formatos no válidos.\n\n¿Desea exportar solo las filas válidas?",
+        "exportCancelled": "Exportación cancelada por el usuario.",
+        "geojsonExportedWithSkips": "GeoJSON exportado con {count} características. Se omitieron {skippedCount} filas con errores."
+    }
+    </script>
+
+    <script type="application/json" id="lang-fr">
+    {
+        "pageTitle": "GeoRoots Prepper - Générateur GeoJSON pour la Réglementation Européenne sur la Déforestation",
+        "title": "GeoRoots Prepper",
+        "subtitle": "Générateur GeoJSON pour la Réglementation Européenne sur la Déforestation",
+        "downloadText": "Téléchargez la dernière version et d'autres outils sur",
+        "licenseText": "Ce logiciel est gratuit, publié sous licence open source GPLv3, voir le code source pour la clause de non-responsabilité complète.",
+        "exportButton": "Exporter GeoJSON",
+        "clearButton": "Effacer Toutes les Lignes",
+        "insertButton": "Insérer une Ligne",
+        "deleteButton": "Supprimer la Ligne",
+        "producerNameHeader": "Nom du Producteur",
+        "placeRefHeader": "Référence du Lieu",
+        "areaHeader": "Surface [ha]",
+        "countryHeader": "Pays",
+        "latHeader": "Latitude",
+        "lngHeader": "Longitude",
+        "polygonHeader": "Polygone",
+        "additionalHeader": "Informations Supplémentaires",
+        "instructionsTitle": "Instructions :",
+        "pasteDataLabel": "Coller les Données :",
+        "pasteDataText": "Cliquez sur n'importe quelle cellule et collez les données du presse-papiers (Ctrl+V). Les données se rempliront à partir de la cellule sélectionnée.",
+        "areaLabel": "Surface :",
+        "areaText": "Entrez uniquement des valeurs numériques (ex : 12,5). Les surfaces >4ha nécessitent des données de polygone.",
+        "countryLabel": "Pays :",
+        "countryText": "Utilisez uniquement des codes à 2 lettres (ex : CO, US, CN, BR).",
+        "coordinatesLabel": "Coordonnées :",
+        "coordinatesText": "Entrez uniquement des nombres purs (ex : -13,123, pas -13,123°).",
+        "polygonFormatLabel": "Format de Polygone :",
+        "polygonFormatText": "Utilisez le format de tableau JSON : [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "Annuler :",
+        "undoText": "Appuyez sur Ctrl+Z pour annuler le dernier collage.",
+        "exportLabel": "Exporter :",
+        "exportText": "Cliquez sur \"Exporter GeoJSON\" pour télécharger vos données au format de la réglementation européenne sur la déforestation.",
+        "noUndoState": "Aucun état d'annulation disponible !",
+        "undoSuccessful": "Annulation réussie !",
+        "dataPastedSuccessfully": "Données collées avec succès !",
+        "pastingData": "Collage des données, veuillez patienter...",
+        "validatingData": "Validation des données, veuillez patienter...",
+        "areaNumericError": "La surface doit être uniquement numérique (ex : 12,5)",
+        "areaPolygonRequired": "Les surfaces ≥4ha nécessitent des données de polygone valides",
+        "countryCodeError": "Doit être un code pays à 2 lettres (ex : CO, US, CN)",
+        "latitudeNumericError": "La latitude doit être uniquement numérique (ex : -13,123)",
+        "latitudeRangeError": "La latitude doit être comprise entre -90 et 90",
+        "longitudeNumericError": "La longitude doit être uniquement numérique (ex : 12,456)",
+        "longitudeRangeError": "La longitude doit être comprise entre -180 et 180",
+        "polygonFormatError": "Le polygone doit être un tableau JSON valide : [[lng,lat],[lng,lat],...]",
+        "rowInsertedSuccessfully": "Ligne insérée avec succès !",
+        "newRowAdded": "Nouvelle ligne ajoutée !",
+        "rowDeletedSuccessfully": "Ligne supprimée avec succès !",
+        "cannotDeleteLastRow": "Impossible de supprimer la dernière ligne !",
+        "pleaseSelectRowToDelete": "Veuillez sélectionner une ligne à supprimer !",
+        "confirmClearAll": "Êtes-vous sûr de vouloir effacer toutes les données ?",
+        "allDataCleared": "Toutes les données effacées !",
+        "noValidDataToExport": "Aucune donnée valide à exporter !",
+        "geojsonExportedWithFeatures": "GeoJSON exporté avec {count} entités !",
+        "confirmExportWithErrors": "Des erreurs ont été trouvées dans {count} ligne(s) : {rows}.\n\nCela peut être dû à des données incomplètes (par ex. Lat/Lng/Surface manquants) ou à des formats invalides.\n\nVoulez-vous exporter uniquement les lignes valides ?",
+        "exportCancelled": "Exportation annulée par l'utilisateur.",
+        "geojsonExportedWithSkips": "GeoJSON exporté avec {count} entités. {skippedCount} lignes avec des erreurs ont été ignorées."
+    }
+    </script>
+
+    <script type="application/json" id="lang-pt">
+    {
+        "pageTitle": "GeoRoots Prepper – Gerador de GeoJSON conforme ao Regulamento de Desmatamento da UE",
+        "title": "GeoRoots Prepper",
+        "subtitle": "Gerador de GeoJSON conforme ao Regulamento de Desmatamento da UE",
+        "downloadText": "Baixe a versão mais recente e outras ferramentas em",
+        "licenseText": "Este software é gratuito, licenciado sob GPLv3 de código aberto; veja o código‑fonte para o aviso legal completo.",
+        "exportButton": "Exportar GeoJSON",
+        "clearButton": "Limpar todas as linhas",
+        "insertButton": "Inserir linha",
+        "deleteButton": "Excluir linha",
+        "producerNameHeader": "Nome do Produtor",
+        "placeRefHeader": "Referência do local",
+        "areaHeader": "Área [ha]",
+        "countryHeader": "País",
+        "latHeader": "Latitude",
+        "lngHeader": "Longitude",
+        "polygonHeader": "Polígono",
+        "additionalHeader": "Informação adicional",
+        "instructionsTitle": "Instruções:",
+        "pasteDataLabel": "Colar dados:",
+        "pasteDataText": "Clique em qualquer célula e cole os dados da área de transferência (Ctrl+V). Os dados serão preenchidos a partir da célula selecionada.",
+        "areaLabel": "Área:",
+        "areaText": "Insira somente valores numéricos (ex.: 12.5). Áreas >4 ha exigem dados de polígono.",
+        "countryLabel": "País:",
+        "countryText": "Use apenas códigos de 2 letras (ex.: CO, US, CN, BR).",
+        "coordinatesLabel": "Coordenadas:",
+        "coordinatesText": "Insira apenas números puros (ex.: -13.123, não -13.123°).",
+        "polygonFormatLabel": "Formato do polígono:",
+        "polygonFormatText": "Use o formato de matriz JSON: [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "Desfazer:",
+        "undoText": "Pressione Ctrl+Z para desfazer a última colagem.",
+        "exportLabel": "Exportar:",
+        "exportText": "Clique em \"Exportar GeoJSON\" para baixar seus dados no formato do regulamento da UE sobre desmatamento.",
+        "noUndoState": "Nenhum estado para desfazer disponível!",
+        "undoSuccessful": "Desfazer bem‑sucedido!",
+        "dataPastedSuccessfully": "Dados colados com sucesso!",
+        "pastingData": "Colando dados, por favor aguarde...",
+        "validatingData": "Validando dados, por favor aguarde...",
+        "areaNumericError": "Área deve ser somente numérica (ex.: 12.5)",
+        "areaPolygonRequired": "Áreas ≥ 4 ha exigem dados de polígono válidos",
+        "countryCodeError": "Deve ser um código de país de 2 letras (ex.: CO, US, CN)",
+        "latitudeNumericError": "Latitude deve ser somente numérica (ex.: -13.123)",
+        "latitudeRangeError": "Latitude deve estar entre -90 e 90",
+        "longitudeNumericError": "Longitude deve ser somente numérica (ex.: 12.456)",
+        "longitudeRangeError": "Longitude deve estar entre -180 e 180",
+        "polygonFormatError": "O polígono deve ser um array JSON válido: [[lng,lat],[lng,lat],…]",
+        "rowInsertedSuccessfully": "Linha inserida com sucesso!",
+        "newRowAdded": "Nova linha adicionada!",
+        "rowDeletedSuccessfully": "Linha excluída com sucesso!",
+        "cannotDeleteLastRow": "Não é possível excluir a última linha!",
+        "pleaseSelectRowToDelete": "Por favor, selecione uma linha para excluir!",
+        "confirmClearAll": "Tem certeza de que deseja limpar todos os dados?",
+        "allDataCleared": "Todos os dados foram limpos!",
+        "noValidDataToExport": "Não há dados válidos para exportar!",
+        "geojsonExportedWithFeatures": "GeoJSON exportado com {count} elementos.",
+        "confirmExportWithErrors": "Erros encontrados em {count} linha(s): {rows}.\n\nIsso pode ser devido a dados incompletos (ex: Lat/Lng/Área ausentes) ou formatos inválidos.\n\nDeseja exportar apenas as linhas válidas?",
+        "exportCancelled": "Exportação cancelada pelo usuário.",
+        "geojsonExportedWithSkips": "GeoJSON exportado com {count} feições. {skippedCount} linhas com erros foram ignoradas."
+    }
+    </script>
+
+    <script type="application/json" id="lang-sw">
+    {
+        "pageTitle": "GeoRoots Prepper – Kizalishaji GeoJSON kwa Kanuni ya Ukataji Misitu ya EU",
+        "title": "GeoRoots Prepper",
+        "subtitle": "Kizalishaji GeoJSON kwa Kanuni ya Ukataji Misitu ya EU",
+        "downloadText": "Pakua toleo la hivi karibuni na zana nyingine katika",
+        "licenseText": "Programu hii ni bure, chini ya leseni ya vyanzo wazi GPLv3; angalia msimbo chanzo kwa taarifa kamili.",
+        "exportButton": "Pakia GeoJSON",
+        "clearButton": "Futa Mistari Yote",
+        "insertButton": "Ingiza Kielekezo",
+        "deleteButton": "Futa Kielekezo",
+        "producerNameHeader": "Jina la Mzalishaji",
+        "placeRefHeader": "Rejea ya Mahali",
+        "areaHeader": "Eneo [ha]",
+        "countryHeader": "Nchi",
+        "latHeader": "Latitudo",
+        "lngHeader": "Longitude",
+        "polygonHeader": "Poligoni",
+        "additionalHeader": "Taarifa ya Ziada",
+        "instructionsTitle": "Maelekezo:",
+        "pasteDataLabel": "Bandika Data:",
+        "pasteDataText": "Bonyeza seli yoyote na bandika data ya clipboard (Ctrl+V). Data itajazwa kuanzia seli iliyochaguliwa.",
+        "areaLabel": "Eneo:",
+        "areaText": "Ingiza thamani za nambari tu (mfano, 12.5). Eneo >4 ha linahitaji data ya poligoni.",
+        "countryLabel": "Nchi:",
+        "countryText": "Tumia tu misimbo ya herufi 2 (mfano, CO, US, CN, BR).",
+        "coordinatesLabel": "Viashiria:",
+        "coordinatesText": "Ingiza nambari zilizosafi tu (mfano, -13.123, sio -13.123°).",
+        "polygonFormatLabel": "Muundo wa Poligoni:",
+        "polygonFormatText": "Tumia muundo wa array ya JSON: [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "Futa:",
+        "undoText": "Bonyeza Ctrl+Z kufuta bandiko la mwisho.",
+        "exportLabel": "Pakia:",
+        "exportText": "Bonyeza \"Pakia GeoJSON\" kuboresha data yako kwa muundo wa kanuni ya EU kuhusu ukataji misitu.",
+        "noUndoState": "Hakuna hatua ya kufuta!",
+        "undoSuccessful": "Kufuta kumefanikiwa!",
+        "dataPastedSuccessfully": "Data imetiwa kikamilifu!",
+        "pastingData": "Inabandika data, tafadhali subiri...",
+        "validatingData": "Inathibitisha data, tafadhali subiri...",
+        "areaNumericError": "Eneo linapaswa kuwa nambari tu (mfano, 12.5)",
+        "areaPolygonRequired": "Eneo ≥ 4 ha linahitaji data halali ya poligoni",
+        "countryCodeError": "Inapaswa kuwa msimbo wa nchi wa herufi 2 (mfano, CO, US, CN)",
+        "latitudeNumericError": "Latitudo inapaswa kuwa nambari tu (mfano, -13.123)",
+        "latitudeRangeError": "Latitudo inapaswa kuwa kati ya ‑90 na 90",
+        "longitudeNumericError": "Longitude inapaswa kuwa nambari tu (mfano, 12.456)",
+        "longitudeRangeError": "Longitude inapaswa kuwa kati ya ‑180 na 180",
+        "polygonFormatError": "Poligoni lazima iwe array halali ya JSON: [[lng,lat],[lng,lat],…]",
+        "rowInsertedSuccessfully": "Kielekezo kimeingizwa kwa mafanikio!",
+        "newRowAdded": "Kielekezo kipya kimeongezwa!",
+        "rowDeletedSuccessfully": "Kielekezo kimefutwa kwa mafanikio!",
+        "cannotDeleteLastRow": "Haiwezi kufuta kielekezo cha mwisho!",
+        "pleaseSelectRowToDelete": "Tafadhali chagua kielekezo cha kufuta!",
+        "confirmClearAll": "Una uhakika unataka kufuta data zote?",
+        "allDataCleared": "Data zote zimefutwa!",
+        "noValidDataToExport": "Hakuna data halali ya kupelekwa nje!",
+        "geojsonExportedWithFeatures": "GeoJSON imebuniwa na vipengele {count}!",
+        "confirmExportWithErrors": "Makosa yamepatikana katika safu {count}: {rows}.\n\nHii inaweza kuwa kutokana na data isiyokamilika (k.m., kukosa Lat/Lng/Eneo) au miundo batili.\n\nUnataka kuhamisha safu halali pekee?",
+        "exportCancelled": "Uhamishaji umeghairiwa na mtumiaji.",
+        "geojsonExportedWithSkips": "GeoJSON imesafirishwa na vipengele {count}. Safu {skippedCount} zenye makosa zilirukwa."
+    }
+    </script>
+
+    <script type="application/json" id="lang-zh">
+    {
+        "pageTitle": "GeoRoots Prepper – 欧盟森林砍伐法规 GeoJSON 生成器",
+        "title": "GeoRoots Prepper",
+        "subtitle": "欧盟森林砍伐法规 GeoJSON 生成器",
+        "downloadText": "在此下载最新版本及其它工具",
+        "licenseText": "本软件免费，采用 GPLv3 开源许可，详见源代码免责声明。",
+        "exportButton": "导出 GeoJSON",
+        "clearButton": "清除所有行",
+        "insertButton": "插入行",
+        "deleteButton": "删除行",
+        "producerNameHeader": "生产者名称",
+        "placeRefHeader": "地点参考",
+        "areaHeader": "面积 [ha]",
+        "countryHeader": "国家",
+        "latHeader": "纬度",
+        "lngHeader": "经度",
+        "polygonHeader": "多边形",
+        "additionalHeader": "附加信息",
+        "instructionsTitle": "说明：",
+        "pasteDataLabel": "粘贴数据：",
+        "pasteDataText": "点击任意单元格并粘贴剪贴板数据 (Ctrl+V)。数据将从选中单元格开始填充。",
+        "areaLabel": "面积：",
+        "areaText": "仅输入数字 (如 12.5)。面积 >4 ha 需提供多边形数据。",
+        "countryLabel": "国家：",
+        "countryText": "仅使用 2 个字母代码 (如 CO, US, CN, BR)。",
+        "coordinatesLabel": "坐标：",
+        "coordinatesText": "仅输入纯数字 (如 -13.123，不带°)。",
+        "polygonFormatLabel": "多边形格式：",
+        "polygonFormatText": "使用 JSON 数组格式: [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "撤销：",
+        "undoText": "按 Ctrl+Z 撤销上次粘贴。",
+        "exportLabel": "导出：",
+        "exportText": "点击\"导出 GeoJSON\"将数据以欧盟森林砍伐法规格式下载。",
+        "noUndoState": "无可撤销状态！",
+        "undoSuccessful": "撤销成功！",
+        "dataPastedSuccessfully": "数据粘贴成功！",
+        "pastingData": "正在粘贴数据，请稍候...",
+        "validatingData": "正在验证数据，请稍候...",
+        "areaNumericError": "面积只能为数字 (如 12.5)",
+        "areaPolygonRequired": "面积 ≥ 4 ha 需有效的多边形数据",
+        "countryCodeError": "必须是 2 个字母的国家代码 (如 CO, US, CN)",
+        "latitudeNumericError": "纬度必须是数字 (如 -13.123)",
+        "latitudeRangeError": "纬度必须在 ‑90 到 90 之间",
+        "longitudeNumericError": "经度必须是数字 (如 12.456)",
+        "longitudeRangeError": "经度必须在 ‑180 到 180 之间",
+        "polygonFormatError": "多边形必须是有效的 JSON 数组: [[lng,lat],[lng,lat],…]",
+        "rowInsertedSuccessfully": "行插入成功！",
+        "newRowAdded": "已添加新行！",
+        "rowDeletedSuccessfully": "行删除成功！",
+        "cannotDeleteLastRow": "无法删除最后一行！",
+        "pleaseSelectRowToDelete": "请选择要删除的行！",
+        "confirmClearAll": "确定要清除所有数据吗？",
+        "allDataCleared": "所有数据已清除！",
+        "noValidDataToExport": "无有效数据可导出！",
+        "geojsonExportedWithFeatures": "已导出 {count} 个要素的 GeoJSON！",
+        "confirmExportWithErrors": "在 {count} 行中发现错误: {rows}。\n\n这可能是由于数据不完整（例如，缺少纬度/经度/面积）或格式无效。\n\n是否只导出有效行？",
+        "exportCancelled": "用户已取消导出。",
+        "geojsonExportedWithSkips": "已导出包含 {count} 个要素的 GeoJSON。跳过了 {skippedCount} 个有错误的行。"
+    }
+    </script>
+
+    <script type="application/json" id="lang-th">
+    {
+        "pageTitle": "GeoRoots Prepper – ตัวสร้าง GeoJSON ตามระเบียบป่าไม้ของสหภาพยุโรป",
+        "title": "GeoRoots Prepper",
+        "subtitle": "ตัวสร้าง GeoJSON ตามระเบียบป่าไม้ของสหภาพยุโรป",
+        "downloadText": "ดาวน์โหลดเวอร์ชันล่าสุดและเครื่องมืออื่น ๆ ได้ที่",
+        "licenseText": "ซอฟต์แวร์นี้ฟรี ภายใต้สัญญาอนุญาตโค้ดเปิด GPLv3 ดูซอร์สโค้ดสำหรับข้อจำกัดความรับผิดฉบับเต็ม",
+        "exportButton": "ส่งออก GeoJSON",
+        "clearButton": "ลบทุกแถว",
+        "insertButton": "แทรกแถว",
+        "deleteButton": "ลบแถว",
+        "producerNameHeader": "ชื่อผู้ผลิต",
+        "placeRefHeader": "อ้างอิงสถานที่",
+        "areaHeader": "พื้นที่ [ha]",
+        "countryHeader": "ประเทศ",
+        "latHeader": "ละติจูด",
+        "lngHeader": "ลองจิจูด",
+        "polygonHeader": "รูปหลายเหลี่ยม",
+        "additionalHeader": "ข้อมูลเพิ่มเติม",
+        "instructionsTitle": "คำแนะนำ:",
+        "pasteDataLabel": "วางข้อมูล:",
+        "pasteDataText": "คลิกที่เซลล์ใดก็ได้แล้ววางข้อมูลจากคลิปบอร์ด (Ctrl+V) ข้อมูลจะเติมจากเซลล์ที่เลือก",
+        "areaLabel": "พื้นที่:",
+        "areaText": "ป้อนค่าตัวเลขเท่านั้น (เช่น 12.5) พื้นที่ >4 ha ต้องมีข้อมูลรูปหลายเหลี่ยม",
+        "countryLabel": "ประเทศ:",
+        "countryText": "ใช้รหัส 2 ตัวอักษรเท่านั้น (เช่น CO, US, CN, BR)",
+        "coordinatesLabel": "พิกัด:",
+        "coordinatesText": "ป้อนเฉพาะตัวเลขล้วน (เช่น -13.123 ไม่ใช่ -13.123°)",
+        "polygonFormatLabel": "รูปแบบรูปหลายเหลี่ยม:",
+        "polygonFormatText": "ใช้รูปแบบอาร์เรย์ JSON: [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "ย้อนกลับ:",
+        "undoText": "กด Ctrl+Z เพื่อย้อนกลับการวางล่าสุด",
+        "exportLabel": "ส่งออก:",
+        "exportText": "คลิก \"ส่งออก GeoJSON\" เพื่อดาวน์โหลดข้อมูลในรูปแบบตามระเบียบของสหภาพยุโรป",
+        "noUndoState": "ไม่มีสถานะย้อนกลับ!",
+        "undoSuccessful": "ย้อนกลับสำเร็จ!",
+        "dataPastedSuccessfully": "วางข้อมูลสำเร็จ!",
+        "pastingData": "กำลังวางข้อมูล โปรดรอสักครู่...",
+        "validatingData": "กำลังตรวจสอบข้อมูล โปรดรอ...",
+        "areaNumericError": "พื้นที่ต้องเป็นตัวเลขเท่านั้น (เช่น 12.5)",
+        "areaPolygonRequired": "พื้นที่ ≥ 4 ha ต้องมีข้อมูลรูปหลายเหลี่ยมที่ถูกต้อง",
+        "countryCodeError": "ต้องเป็นรหัสประเทศ 2 ตัวอักษร (เช่น CO, US, CN)",
+        "latitudeNumericError": "ละติจูดต้องเป็นตัวเลขเท่านั้น (เช่น -13.123)",
+        "latitudeRangeError": "ละติจูดต้องอยู่ระหว่าง -90 ถึง 90",
+        "longitudeNumericError": "ลองจิจูดต้องเป็นตัวเลขเท่านั้น (เช่น 12.456)",
+        "longitudeRangeError": "ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180",
+        "polygonFormatError": "รูปหลายเหลี่ยมต้องเป็นอาร์เรย์ JSON ที่ถูกต้อง: [[lng,lat],[lng,lat],…]",
+        "rowInsertedSuccessfully": "แทรกแถวสำเร็จ!",
+        "newRowAdded": "เพิ่มแถวใหม่แล้ว!",
+        "rowDeletedSuccessfully": "ลบแถวสำเร็จ!",
+        "cannotDeleteLastRow": "ไม่สามารถลบแถวสุดท้ายได้!",
+        "pleaseSelectRowToDelete": "โปรดเลือกแถวที่จะลบ!",
+        "confirmClearAll": "คุณแน่ใจหรือว่าต้องการล้างข้อมูลทั้งหมด?",
+        "allDataCleared": "ล้างข้อมูลทั้งหมดแล้ว!",
+        "noValidDataToExport": "ไม่มีข้อมูลที่ถูกต้องสำหรับส่งออก!",
+        "geojsonExportedWithFeatures": "ส่งออก GeoJSON พร้อม {count} ฟีเจอร์!",
+        "confirmExportWithErrors": "พบข้อผิดพลาดใน {count} แถว: {rows}\n\nอาจเกิดจากข้อมูลไม่สมบูรณ์ (เช่น ไม่มี Lat/Lng/Area) หรือรูปแบบไม่ถูกต้อง\n\nคุณต้องการส่งออกเฉพาะแถวที่ถูกต้องหรือไม่?",
+        "exportCancelled": "ผู้ใช้ยกเลิกการส่งออก",
+        "geojsonExportedWithSkips": "ส่งออก GeoJSON พร้อม {count} ฟีเจอร์ ข้าม {skippedCount} แถวที่มีข้อผิดพลาดไป"
+    }
+    </script>
+    
+	<script type="application/json" id="lang-am">
+    {
+        "pageTitle": "GeoRoots Prepper - የአውሮፓ የደን ማጥፋት ደንብ GeoJSON መፍጠሪያ",
+        "title": "GeoRoots Prepper",
+        "subtitle": "የአውሮፓ የደን ማጥፋት ደንብ GeoJSON መፍጠሪያ",
+        "downloadText": "የቅርብ ስሪትን እና ሌሎች መሳሪያዎችን ያውርዱ",
+        "licenseText": "ይህ ሶፍትዌር ነፃ ነው፣ በ GPLv3 ክፍት ምንጭ ፈቃድ የተሰጠ፣ ሙሉ ማስተናገድ ለማየት የምንጭ ኮድን ይመልከቱ።",
+        "exportButton": "GeoJSON አስወግድ",
+        "clearButton": "ሁሉንም ረድፎች አጥፋ",
+        "insertButton": "ረድፍ አክል",
+        "deleteButton": "ረድፍ አጥፋ",
+        "producerNameHeader": "የአምራች ስም",
+        "placeRefHeader": "የቦታ ማጣቀሻ",
+        "areaHeader": "ቦታ [ሄክታር]",
+        "countryHeader": "አገር",
+        "latHeader": "ኬክታር",
+        "lngHeader": "ኬክታር",
+        "polygonHeader": "ፖሊጎን",
+        "additionalHeader": "ተጨማሪ መረጃ",
+        "instructionsTitle": "መመሪያዎች:",
+        "pasteDataLabel": "ዳታ ለጥፍ:",
+        "pasteDataText": "ማንኛውንም ሴል ይጫኑ እና ዳታ ከክሊፕቦርድ ይለጥፉ (Ctrl+V)። ዳታው ከተመረጠው ሴል ይጀምራል።",
+        "areaLabel": "ቦታ:",
+        "areaText": "ቁጥር ያስገቡ (ለምሳሌ፣ 12.5)። ቦታዎች >4ha ፖሊጎን መረጃ ያስፈልጋሉ።",
+        "countryLabel": "አገር:",
+        "countryText": "2-ፊደል ኮድ ብቻ (ለምሳሌ፣ CO, US, CN, BR)።",
+        "coordinatesLabel": "አቀማመጦች:",
+        "coordinatesText": "ቁጥር ብቻ ያስገቡ (ለምሳሌ፣ -13.123 እንጂ -13.123° አይደለም)።",
+        "polygonFormatLabel": "ፖሊጎን ቅርጸት:",
+        "polygonFormatText": "የ JSON አይነት ዝርዝር ይጠቀሙ፡ [[lng,lat],[lng,lat],[lng,lat]]",
+        "undoLabel": "ይቅር:",
+        "undoText": "Ctrl+Z ይጫኑ ለመመለስ።",
+        "exportLabel": "አስወግድ:",
+        "exportText": "\"GeoJSON አስወግድ\" ይጫኑ ዳታዎን በአውሮፓ የደን ማጥፋት ደንብ ቅርጸት ለማውረድ።",
+        "noUndoState": "ምንም የመመለሻ ሁኔታ የለም!",
+        "undoSuccessful": "ተመለሰ!",
+        "dataPastedSuccessfully": "ዳታ ተሰናከለ!",
+        "pastingData": "ዳታ በመለጠፍ ላይ ነው፣ እባክዎ ይጠብቁ...",
+        "validatingData": "ዳታ በማረጋገጥ ላይ ነው፣ እባክዎ ይጠብቁ...",
+        "areaNumericError": "ቦታ ቁጥር ብቻ መሆን አለበት (ለምሳሌ፣ 12.5)",
+        "areaPolygonRequired": "ቦታዎች ≥4ha ትክክለኛ ፖሊጎን መረጃ ያስፈልጋሉ",
+        "countryCodeError": "2-ፊደል የአገር ኮድ መሆን አለበት (ለምሳሌ፣ CO, US, CN)",
+        "latitudeNumericError": "ኬክታር ቁጥር ብቻ መሆን አለበት (ለምሳሌ፣ -13.123)",
+        "latitudeRangeError": "ኬክታር -90 እስከ 90 መሆን አለበት",
+        "longitudeNumericError": "ኬክታር ቁጥር ብቻ መሆን አለበት (ለምሳሌ፣ 12.456)",
+        "longitudeRangeError": "ኬክታር -180 እስከ 180 መሆን አለበት",
+        "polygonFormatError": "ፖሊጎን ትክክለኛ የ JSON ዝርዝር መሆን አለበት: [[lng,lat],[lng,lat],…]",
+        "rowInsertedSuccessfully": "ረድፍ ተጨመረ!",
+        "newRowAdded": "አዲስ ረድፍ ታከለ!",
+        "rowDeletedSuccessfully": "ረድፍ ተሰርዟል!",
+        "cannotDeleteLastRow": "የመጨረሻውን ረድፍ ማጥፋት አይቻልም!",
+        "pleaseSelectRowToDelete": "እባክዎ ረድፍ ለማጥፋት ይምረጡ!",
+        "confirmClearAll": "ሁሉንም ዳታ ማጥፋት እርግጠኛ ነዎት?",
+        "allDataCleared": "ሁሉም ዳታ ተሰርዟል!",
+        "noValidDataToExport": "ለማስወገድ ትክክለኛ ዳታ የለም!",
+        "geojsonExportedWithFeatures": "GeoJSON በ {count} ባህሪያት ተላክ!",
+        "confirmExportWithErrors": "በ {count} ረድፍ(ዎች) ውስጥ ስህተቶች ተገኝተዋል: {rows}።\n\nይህ ባልተሟላ መረጃ (ለምሳሌ፣ የጎደለ Lat/Lng/Area) ወይም ልክ ባልሆኑ ቅርጸቶች ምክንያት ሊሆን ይችላል።\n\nትክክለኛዎቹን ረድፎች ብቻ መላክ ይፈልጋሉ?",
+        "exportCancelled": "መላክ በተጠቃሚ ተሰርዟል።",
+        "geojsonExportedWithSkips": "GeoJSON ከ {count} ባህሪያት ጋር ተልኳል። ስህተት ያለባቸው {skippedCount} ረድፎች ተዘለዋል።"
+    }
+    </script>
+                    
+
+
+
+    <script>
+        let selectedCell = null;
+        let selectedRow = null;
+        let undoState = null;
+        let currentLanguage = 'en';
+        let translations = {};
+
+        // Initialize translations
+        function initializeTranslations() {
+                const enScript = document.getElementById('lang-en');
+                const esScript = document.getElementById('lang-es');
+                const frScript = document.getElementById('lang-fr');
+                const ptScript = document.getElementById('lang-pt');
+                const swScript = document.getElementById('lang-sw');
+                const zhScript = document.getElementById('lang-zh');
+                const thScript = document.getElementById('lang-th');
+                const amScript = document.getElementById('lang-am');
+            
+            translations.en = JSON.parse(enScript.textContent);
+            translations.es = JSON.parse(esScript.textContent);
+            translations.fr = JSON.parse(frScript.textContent);
+            translations.pt = JSON.parse(ptScript.textContent);
+            translations.sw = JSON.parse(swScript.textContent);
+            translations.zh = JSON.parse(zhScript.textContent);
+            translations.th = JSON.parse(thScript.textContent);
+            translations.am = JSON.parse(amScript.textContent);
+
+        }
+
+        // Change language
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('georoots-language', lang);
+            document.documentElement.lang = lang;
+            updateAllText();
+        }
+
+        // Update all text elements with translations
+        function updateAllText() {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                const translation = getText(key);
+                
+                if (translation) {
+                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                        element.placeholder = translation;
+                    } else {
+                        element.textContent = translation;
+                    }
+                } else {
+                    console.warn(`Missing translation for key: ${key} in language: ${currentLanguage}`);
+                }
+            });
+        }
+
+        // Get translated text
+        function getText(key, params = {}) {
+            let text = (translations[currentLanguage] && translations[currentLanguage][key]) || (translations.en && translations.en[key]) || key;
+            
+            // Replace parameters
+            Object.keys(params).forEach(param => {
+                text = text.replace(`{${param}}`, params[param]);
+            });
+            
+            return text;
+        }
+
+        // Initialize the table with 10 empty rows
+        function initializeTable() {
+            const tbody = document.getElementById('tableBody');
+            let newRowsHtml = '';
+            for (let i = 0; i < 10; i++) {
+                newRowsHtml += getEmptyRowHtml(i + 1);
+            }
+            tbody.innerHTML = newRowsHtml;
+        }
+
+        // Save current state for undo
+        function saveUndoState() {
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.children);
+            undoState = rows.map(row => {
+                const inputs = row.querySelectorAll('.cell-input');
+                return Array.from(inputs).map(input => input.value);
+            });
+        }
+
+        // Restore undo state
+        function restoreUndoState() {
+            if (!undoState) {
+                showStatus(getText('noUndoState'), 'info');
+                return;
+            }
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            undoState.forEach((rowData, index) => {
+                addEmptyRow(); // This is fine for smaller undo states
+                const row = tbody.children[index];
+                const inputs = row.querySelectorAll('.cell-input');
+                rowData.forEach((value, cellIndex) => {
+                    if (inputs[cellIndex]) {
+                        inputs[cellIndex].value = value;
+                        validateCell(inputs[cellIndex]);
+                    }
+                });
+            });
+
+            showStatus(getText('undoSuccessful'), 'success');
+            undoState = null;
+        }
+
+        function getEmptyRowHtml(rowCount) {
+            return `
+                <tr>
+                    <td class="row-number" onclick="selectRow(this)">${rowCount}</td>
+                    <td><input type="text" class="cell-input" data-col="producerName" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="placeRef" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="area" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="country" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="latitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="longitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="polygon" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="additional" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                </tr>
+            `;
+        }
+
+        // Add an empty row to the table
+        function addEmptyRow() {
+            const tbody = document.getElementById('tableBody');
+            const rowCount = tbody.children.length + 1;
+            tbody.insertAdjacentHTML('beforeend', getEmptyRowHtml(rowCount));
+            updateRowNumbers();
+        }
+
+        // Update row numbers after adding/removing rows
+        function updateRowNumbers() {
+            const tbody = document.getElementById('tableBody');
+            const rows = tbody.children;
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].querySelector('.row-number').textContent = i + 1;
+            }
+        }
+
+        // Select a row by clicking row number
+        function selectRow(rowNumber) {
+            selectedRow = rowNumber.closest('tr');
+            const firstInput = selectedRow.querySelector('.cell-input');
+            if (firstInput) {
+                selectCell(firstInput);
+            }
+        }
+
+        // Select a cell and highlight it
+        function selectCell(input) {
+            // Remove previous selections
+            document.querySelectorAll('.cell-input.selected').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+
+            selectedCell = input;
+            selectedRow = input.closest('tr');
+            
+            // Highlight selected cell
+            input.classList.add('selected');
+        }
+
+        // Handle paste operation with performance optimizations
+        function handlePaste(event) {
+            event.preventDefault();
+            saveUndoState();
+            
+            const clipboardData = event.clipboardData || window.clipboardData;
+            const pastedData = clipboardData.getData('text');
+            
+            if (!selectedCell) return;
+            
+            const rows = pastedData.split('\n').filter(row => row.trim() !== '');
+            const PASTE_THRESHOLD = 50; // Show loader for more than 50 rows
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingText = document.getElementById('loadingText');
+
+            const showLoader = rows.length > PASTE_THRESHOLD;
+
+            if (showLoader) {
+                loadingText.textContent = getText('pastingData');
+                loadingOverlay.classList.add('show');
+            }
+
+            // Use setTimeout to allow the browser to render the loader before the heavy work
+            setTimeout(() => {
+                // Phase 1: Fast DOM manipulation
+                const tbody = document.getElementById('tableBody');
+                const allTableRows = Array.from(tbody.children);
+                const currentRow = selectedCell.closest('tr');
+                const currentRowIndex = allTableRows.indexOf(currentRow);
+                const currentCellIndex = Array.from(currentRow.children).indexOf(selectedCell.parentNode) - 1;
+
+                const rowsToAdd = (currentRowIndex + rows.length) - allTableRows.length;
+                if (rowsToAdd > 0) {
+                    let newRowsHtml = '';
+                    for (let i = 0; i < rowsToAdd; i++) {
+                        newRowsHtml += getEmptyRowHtml(allTableRows.length + i + 1);
+                    }
+                    tbody.insertAdjacentHTML('beforeend', newRowsHtml);
+                }
+                
+                const updatedAllTableRows = Array.from(tbody.children);
+
+                rows.forEach((rowData, rowOffset) => {
+                    const cells = rowData.split('\t');
+                    const targetRow = updatedAllTableRows[currentRowIndex + rowOffset];
+                    if (!targetRow) return;
+                    
+                    const inputs = targetRow.querySelectorAll('.cell-input');
+                    cells.forEach((cellData, cellOffset) => {
+                        const targetCellIndex = currentCellIndex + cellOffset;
+                        if (targetCellIndex < inputs.length) {
+                            inputs[targetCellIndex].value = cellData.trim();
+                        }
+                    });
+                });
+
+                // Phase 2: Validation
+                if (showLoader) {
+                    loadingText.textContent = getText('validatingData');
+                }
+
+                // Another timeout to allow the "Validating..." text to render
+                setTimeout(() => {
+                    try {
+                        const startValidationIndex = currentRowIndex;
+                        const endValidationIndex = currentRowIndex + rows.length;
+                        for (let i = startValidationIndex; i < endValidationIndex; i++) {
+                            const rowToValidate = updatedAllTableRows[i];
+                            if (rowToValidate) {
+                                rowToValidate.querySelectorAll('.cell-input').forEach(validateCell);
+                            }
+                        }
+                        showStatus(getText('dataPastedSuccessfully'), 'success');
+                    } finally {
+                        if (showLoader) {
+                            loadingOverlay.classList.remove('show');
+                        }
+                    }
+                }, 10);
+            }, 10);
+        }
+
+        // Validate cell data with enhanced rules
+        function validateCell(input) {
+            const value = input.value.trim();
+            const col = input.dataset.col;
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Remove existing error states
+            input.classList.remove('error');
+            hideTooltip(input);
+            
+            if (value === '') {
+                return; // Empty cells are valid (unless required by other fields)
+            }
+            
+            switch (col) {
+                case 'area':
+                    if (!/^\d+(\.\d+)?$/.test(value)) {
+                        isValid = false;
+                        errorMessage = getText('areaNumericError');
+                    } else {
+                        const areaValue = parseFloat(value);
+                        if (areaValue >= 4) {
+                            const row = input.closest('tr');
+                            const polygonInput = row.querySelector('[data-col="polygon"]');
+                            const polygonValue = polygonInput.value.trim();
+                            let isPolygonStructurallyValid = false;
+                            if (polygonValue) {
+                                try {
+                                    const parsed = JSON.parse(polygonValue);
+                                    if (Array.isArray(parsed) && parsed.length >= 3) {
+                                        isPolygonStructurallyValid = true;
+                                    }
+                                } catch(e) { /* ignore */ }
+                            }
+                            if (!isPolygonStructurallyValid) {
+                                isValid = false;
+                                errorMessage = getText('areaPolygonRequired');
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'country':
+                    if (!/^[A-Za-z]{2}$/.test(value)) {
+                        isValid = false;
+                        errorMessage = getText('countryCodeError');
+                    }
+                    break;
+                    
+                case 'latitude':
+                    if (!/^-?\d+(\.\d+)?$/.test(value)) {
+                        isValid = false;
+                        errorMessage = getText('latitudeNumericError');
+                    } else {
+                        const lat = parseFloat(value);
+                        if (lat < -90 || lat > 90) {
+                            isValid = false;
+                            errorMessage = getText('latitudeRangeError');
+                        }
+                    }
+                    break;
+                    
+                case 'longitude':
+                    if (!/^-?\d+(\.\d+)?$/.test(value)) {
+                        isValid = false;
+                        errorMessage = getText('longitudeNumericError');
+                    } else {
+                        const lng = parseFloat(value);
+                        if (lng < -180 || lng > 180) {
+                            isValid = false;
+                            errorMessage = getText('longitudeRangeError');
+                        }
+                    }
+                    break;
+                    
+                case 'polygon':
+                    try {
+                        const parsed = JSON.parse(value);
+                        if (!Array.isArray(parsed) || parsed.length < 3) {
+                            throw new Error('Invalid polygon format');
+                        }
+                        parsed.forEach(coord => {
+                            if (!Array.isArray(coord) || coord.length !== 2 || 
+                                isNaN(coord[0]) || isNaN(coord[1])) {
+                                throw new Error('Invalid coordinate format');
+                            }
+                        });
+                        
+                        const row = input.closest('tr');
+                        const areaInput = row.querySelector('[data-col="area"]');
+                        if (areaInput.value.trim()) {
+                            setTimeout(() => validateCell(areaInput), 10);
+                        }
+                        
+                    } catch (e) {
+                        isValid = false;
+                        errorMessage = getText('polygonFormatError');
+                    }
+                    break;
+            }
+            
+            if (!isValid) {
+                input.classList.add('error');
+                showTooltip(input, errorMessage);
+            }
+        }
+
+        // Show validation tooltip
+        function showTooltip(input, message) {
+            hideTooltip(input); // Remove existing tooltip
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'validation-tooltip show';
+            tooltip.textContent = message;
+            
+            input.parentNode.style.position = 'relative';
+            input.parentNode.appendChild(tooltip);
+            
+            setTimeout(() => tooltip.classList.add('show'), 10);
+        }
+
+        // Hide validation tooltip
+        function hideTooltip(input) {
+            const existing = input.parentNode.querySelector('.validation-tooltip');
+            if (existing) {
+                existing.remove();
+            }
+        }
+
+        // Insert a new row
+        function insertRow() {
+            saveUndoState();
+            
+            if (selectedRow) {
+                const tbody = document.getElementById('tableBody');
+                const newRow = selectedRow.cloneNode(true);
+                newRow.querySelectorAll('.cell-input').forEach(input => {
+                    input.value = '';
+                    input.classList.remove('error');
+                    hideTooltip(input);
+                });
+                
+                tbody.insertBefore(newRow, selectedRow.nextSibling);
+                updateRowNumbers();
+                showStatus(getText('rowInsertedSuccessfully'), 'success');
+            } else {
+                addEmptyRow();
+                showStatus(getText('newRowAdded'), 'success');
+            }
+        }
+
+        // Delete selected row
+        function deleteSelectedRow() {
+            if (selectedRow) {
+                saveUndoState();
+                
+                const tbody = document.getElementById('tableBody');
+                if (tbody.children.length > 1) {
+                    selectedRow.remove();
+                    updateRowNumbers();
+                    selectedRow = null;
+                    selectedCell = null;
+                    showStatus(getText('rowDeletedSuccessfully'), 'success');
+                } else {
+                    showStatus(getText('cannotDeleteLastRow'), 'error');
+                }
+            } else {
+                showStatus(getText('pleaseSelectRowToDelete'), 'info');
+            }
+        }
+
+        // Clear all rows
+        function clearAllRows() {
+            if (confirm(getText('confirmClearAll'))) {
+                saveUndoState();
+                
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                initializeTable();
+                selectedRow = null;
+                selectedCell = null;
+                showStatus(getText('allDataCleared'), 'success');
+            }
+        }
+
+        /**
+         * Finds all rows that are not empty but have validation errors or incomplete data.
+         * @returns {number[]} An array of invalid row numbers.
+         */
+        function findAllInvalidRows() {
+            const rows = Array.from(document.getElementById('tableBody').children);
+            const invalidRows = [];
+
+            rows.forEach(row => {
+                row.querySelector('.row-number').style.backgroundColor = '';
+            });
+
+            rows.forEach((row, index) => {
+                const inputs = row.querySelectorAll('.cell-input');
+                const data = {
+                    area: inputs[2].value.trim(),      // Index updated
+                    latitude: inputs[4].value.trim(),   // Index updated
+                    longitude: inputs[5].value.trim(),  // Index updated
+                    polygon: inputs[6].value.trim(),    // Index updated
+                };
+
+                const isRowEmpty = Array.from(inputs).every(input => input.value.trim() === '');
+                if (isRowEmpty) {
+                    return;
+                }
+
+                let isRowValid = true;
+                
+                if (row.querySelector('.cell-input.error')) {
+                    isRowValid = false;
+                }
+
+                const hasValidPoint = data.latitude && data.longitude && data.area &&
+                                      !inputs[4].classList.contains('error') &&
+                                      !inputs[5].classList.contains('error') &&
+                                      !inputs[2].classList.contains('error');
+
+                const hasValidPolygon = data.polygon && !inputs[6].classList.contains('error');
+
+                if (!hasValidPoint && !hasValidPolygon) {
+                    isRowValid = false;
+                }
+
+                if (!isRowValid) {
+                    invalidRows.push(index + 1);
+                }
+            });
+
+            return invalidRows;
+        }
+
+        // Export data as GeoJSON
+        function exportGeoJSON() {
+            const invalidRowNumbers = findAllInvalidRows();
+
+            if (invalidRowNumbers.length > 0) {
+                invalidRowNumbers.forEach(rowNum => {
+                    const row = document.querySelector(`#tableBody tr:nth-child(${rowNum})`);
+                    if (row) {
+                        row.querySelector('.row-number').style.backgroundColor = '#f8d7da';
+                    }
+                });
+
+                const firstInvalidRow = document.querySelector(`#tableBody tr:nth-child(${invalidRowNumbers[0]})`);
+                if (firstInvalidRow) {
+                    firstInvalidRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                const confirmationMessage = getText('confirmExportWithErrors', {
+                    count: invalidRowNumbers.length,
+                    rows: invalidRowNumbers.join(', ')
+                });
+
+                if (!confirm(confirmationMessage)) {
+                    showStatus(getText('exportCancelled'), 'info');
+                    invalidRowNumbers.forEach(rowNum => {
+                       const row = document.querySelector(`#tableBody tr:nth-child(${rowNum})`);
+                       if (row) row.querySelector('.row-number').style.backgroundColor = '';
+                    });
+                    return; 
+                }
+            }
+
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.children);
+            const features = [];
+            let nonEmptyRowCount = 0;
+            
+            rows.forEach((row, index) => {
+                const inputs = row.querySelectorAll('.cell-input');
+                const data = {
+                    producerName: inputs[0].value.trim(),
+                    placeRef: inputs[1].value.trim(),
+                    area: inputs[2].value.trim(),
+                    country: inputs[3].value.trim(),
+                    latitude: inputs[4].value.trim(),
+                    longitude: inputs[5].value.trim(),
+                    polygon: inputs[6].value.trim(),
+                    additional: inputs[7].value.trim()
+                };
+                
+                if (Object.values(data).some(val => val !== '')) {
+                    nonEmptyRowCount++;
+                } else {
+                    return;
+                }
+                
+                let geometry = null;
+                
+                if (data.polygon && !inputs[6].classList.contains('error')) {
+                    try {
+                        const coordinates = JSON.parse(data.polygon);
+                        if (Array.isArray(coordinates) && coordinates.length >= 3) {
+                            geometry = { type: "Polygon", coordinates: [coordinates] };
+                        }
+                    } catch (e) { /* ignore */ }
+                } else if (data.latitude && data.longitude && data.area &&
+                           !inputs[4].classList.contains('error') &&
+                           !inputs[5].classList.contains('error') &&
+                           !inputs[2].classList.contains('error')) {
+                    const lat = parseFloat(data.latitude);
+                    const lng = parseFloat(data.longitude);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        geometry = { type: "Point", coordinates: [lng, lat] };
+                    }
+                }
+                
+                if (geometry) {
+                    const properties = {};
+                    if (data.producerName) properties.ProducerName = data.producerName;
+                    if (data.placeRef) properties.ProductionPlace = data.placeRef;
+                    if (data.area) properties.Area = parseFloat(data.area);
+                    if (data.country) properties.ProducerCountry = data.country;
+                    if (data.additional) properties.AdditionalInfo = data.additional;
+
+					const feature = {
+						type: "Feature",
+						geometry: geometry,
+						properties: properties
+					};
+                    features.push(feature);
+                }
+            });
+            
+            if (features.length === 0) {
+                showStatus(getText('noValidDataToExport'), 'error');
+                return;
+            }
+            
+            const geoJSON = {
+                type: "FeatureCollection",
+                features: features
+            };
+            
+            const blob = new Blob([JSON.stringify(geoJSON, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'eu_deforestation_data.geojson';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            const skippedCount = nonEmptyRowCount - features.length;
+            if (skippedCount > 0) {
+                showStatus(getText('geojsonExportedWithSkips', { count: features.length, skippedCount: skippedCount }), 'success');
+            } else {
+                showStatus(getText('geojsonExportedWithFeatures', { count: features.length }), 'success');
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type} show`;
+            
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 4000);
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTranslations();
+            
+            const savedLanguage = localStorage.getItem('georoots-language');
+            const browserLanguage = navigator.language.split('-')[0];
+            const defaultLanguage = savedLanguage || (translations[browserLanguage] ? browserLanguage : 'en');
+            
+            document.getElementById('languageSelect').value = defaultLanguage;
+            changeLanguage(defaultLanguage);
+            
+            const tbody = document.getElementById('tableBody');
+            if (tbody.children.length <= 1 && tbody.querySelector('input').value === '') {
+                tbody.innerHTML = '';
+                initializeTable();
+            }
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key) {
+                        case 's': e.preventDefault(); exportGeoJSON(); break;
+                        case 'i': e.preventDefault(); insertRow(); break;
+                        case 'd': e.preventDefault(); deleteSelectedRow(); break;
+                        case 'z': e.preventDefault(); restoreUndoState(); break;
+                    }
+                }
+            });
+        });
+		
+		// --- Back to Top Button Logic ---
+		const backToTopButton = document.getElementById("backToTopBtn");
+
+		// Show button when user scrolls down
+		window.onscroll = function() {
+			if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+				backToTopButton.classList.add("show");
+			} else {
+				backToTopButton.classList.remove("show");
+			}
+		};
+
+		// Scroll to top when button is clicked
+		function scrollToTop() {
+			window.scrollTo({top: 0, behavior: 'smooth'});
+		}
+    </script>
+</body>
+</html>

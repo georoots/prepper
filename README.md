@@ -7,12 +7,12 @@ Because it is running only locally, for large amounts of data it will consume si
 
 ## Usage
 
-Open the prepper.html file in your browser.
-Select a language from the dropdown at the top.
-Prepare your data in an MS Excel / LibreOffice Calc / OpenOffice Calc
-Copy the data in the spreadsheet into clipboard, select the top cell in the top row and paste all data.
-Correct any highlighted errors.
-Press Export GeoJSON to download the data in EUDR compatible format. This file can be then viewed in GeoRoots Mapper and submitted into EUDR DDS portal directly.
+* Open the prepper.html file in your browser.
+* Select a language from the dropdown at the top.
+* Prepare your data in an MS Excel / LibreOffice Calc / OpenOffice Calc
+* Copy the data in the spreadsheet into clipboard, select the top cell in the top row and paste all data.
+* Correct any highlighted errors.
+* Press Export GeoJSON to download the data in EUDR compatible format. This file can be then viewed in GeoRoots Mapper and submitted into EUDR DDS portal directly.
 
 ## FAQ
 

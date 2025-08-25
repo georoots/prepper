@@ -65,7 +65,7 @@ Prepper tool supports following shortcuts:
 
 ## About GeoRoots: Open Source Coffee Industry Tools for EUDR Compliance and geo traceability
 
-GeoRoots is a collection of minimalistic, open-source tools designed specifically for the coffee industry to meet EU Deforestation Regulation (EUDR) requirements and enhance geo traceability.
+GeoRoots is a collection of minimalistic, open-source tools designed specifically for EU Deforestation Regulation (EUDR) requirements and enhancing geo traceability.
 
 Our philosophy is simple: provide useful tools that respect your privacy, work offline (where possible), and require no complex setup or subscription fees. Every tool runs entirely in your browser and can be downloaded for offline use.
 
@@ -74,13 +74,13 @@ Our philosophy is simple: provide useful tools that respect your privacy, work o
 *   **100% Private**: All tools run locally in your browser. No data is ever transmitted to external servers.
 *   **Open Source**: Fully open source and transparent. Inspect, modify, and contribute to the code.
 *   **Offline Ready**: Download and use tools completely offline. Perfect for remote locations.
-*   **Mobile Friendly**: Works seamlessly on desktop, tablet, and mobile devices.
+*   **Mobile Friendly**: Works on desktop, tablet, and mobile devices.
 
 ### Perfect for:
 
-*   Coffee producers and cooperatives
-*   Smaller coffee traders and exporters
-*   Coffee roasters and importers
+*   Producers and cooperatives
+*   Smaller traders and exporters
+*   Importers, operators
 *   Sustainability consultants
 
 ### Useful Resources

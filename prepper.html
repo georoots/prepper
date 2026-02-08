@@ -22,6 +22,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Prepper - GeoRoots</title>
     <style>
         /* CSS Variables for consistent color scheme */
@@ -225,8 +228,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         }
 
         .spreadsheet-container {
-            padding: 20px;
             overflow-x: auto;
+            overflow-y: visible; /* Allow tooltips to overflow vertically */
+            /* Let the page scroll, not the container */
         }
 
         .spreadsheet {
@@ -234,7 +238,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             border-collapse: collapse;
             background: var(--white);
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible; /* Allow tooltips to escape table bounds */
             box-shadow: 0 4px 12px var(--shadow-color);
         }
 
@@ -255,10 +259,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             border-right: none;
         }
 
+        .spreadsheet tbody {
+            overflow: visible; /* Allow tooltips to escape tbody */
+        }
+
+        .spreadsheet tr {
+            overflow: visible; /* Allow tooltips to escape row */
+        }
+
         .spreadsheet td {
             padding: 0;
             border: 1px solid var(--gray-border);
             position: relative;
+            overflow: visible; /* Allow tooltips to overflow cell bounds */
         }
 
         .spreadsheet tr:nth-child(even) {
@@ -325,18 +338,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 12px;
-            z-index: 1000;
+            z-index: 10000; /* Very high to appear above table */
             white-space: nowrap;
             opacity: 0;
+            visibility: hidden;
             transform: translateY(-5px);
-            transition: all 0.3s ease;
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+            pointer-events: none;
+            margin-top: 2px; /* Small gap between input and tooltip */
         }
 
-        .validation-tooltip.show {
+        /* Show tooltip on hover of error, unclosed, or warning inputs */
+        .cell-input.error:hover ~ .validation-tooltip,
+        .cell-input.unclosed:hover ~ .validation-tooltip,
+        .cell-input.warning:hover ~ .validation-tooltip,
+        .cell-input.error:focus ~ .validation-tooltip,
+        .cell-input.unclosed:focus ~ .validation-tooltip,
+        .cell-input.warning:focus ~ .validation-tooltip {
             opacity: 1;
+            visibility: visible;
             transform: translateY(0);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0s;
         }
 
+        /* Tooltip arrow pointing down (when tooltip is below input) */
         .validation-tooltip::before {
             content: '';
             position: absolute;
@@ -345,6 +370,32 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             border-left: 5px solid transparent;
             border-right: 5px solid transparent;
             border-bottom: 5px solid var(--danger-color);
+        }
+
+        /* Tooltip positioned above input (when near bottom) */
+        .validation-tooltip.above {
+            top: auto;
+            bottom: 100%;
+            transform: translateY(5px);
+            margin-top: 0;
+            margin-bottom: 2px; /* Small gap between input and tooltip when above */
+        }
+
+        .cell-input.error:hover ~ .validation-tooltip.above,
+        .cell-input.unclosed:hover ~ .validation-tooltip.above,
+        .cell-input.warning:hover ~ .validation-tooltip.above,
+        .cell-input.error:focus ~ .validation-tooltip.above,
+        .cell-input.unclosed:focus ~ .validation-tooltip.above,
+        .cell-input.warning:focus ~ .validation-tooltip.above {
+            transform: translateY(0);
+        }
+
+        /* Tooltip arrow pointing up (when tooltip is above input) */
+        .validation-tooltip.above::before {
+            top: auto;
+            bottom: -5px;
+            border-bottom: none;
+            border-top: 5px solid var(--danger-color);
         }
 
         .status-message {
@@ -356,7 +407,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             color: white;
             font-weight: 600;
             z-index: 2001; /* Above loading overlay */
-            transform: translateX(400px);
+            transform: translateX(800px);
             transition: all 0.3s ease;
         }
 
@@ -445,8 +496,148 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         .col-country { min-width: 120px; }
         .col-lat { min-width: 100px; }
         .col-lng { min-width: 100px; }
-        .col-polygon { min-width: 200px; }
+        .col-polygon { min-width: 250px; }
         .col-additional { min-width: 150px; }
+
+        /* Polygon format dropdown in header */
+        .polygon-format-selector {
+            display: block;
+            margin-top: 5px;
+            padding: 4px 8px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .polygon-format-selector option {
+            background: var(--gray-dark);
+            color: white;
+        }
+
+        .polygon-format-selector:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Row filter dropdown in controls */
+        #rowFilterSelect {
+            padding: 8px 12px;
+            border: 2px solid var(--gray-border);
+            border-radius: 6px;
+            background: var(--white);
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #rowFilterSelect:hover {
+            border-color: var(--secondary-color);
+        }
+
+        #rowFilterSelect:focus {
+            outline: none;
+            border-color: var(--confirm-color);
+            box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.1);
+        }
+
+        #rowFilterSelect option {
+            background: var(--white);
+            color: var(--text-color);
+        }
+
+        /* Warning button style for Close Polygons */
+        .btn-warning {
+            background: #f39c12;
+            display: none;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+
+        .btn-warning.show {
+            display: inline-flex;
+        }
+
+        /* Pagination Controls */
+        #paginationControls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+        }
+
+        #paginationControls.hidden {
+            display: none;
+        }
+
+        .page-btn {
+            min-width: 38px;
+            height: 38px;
+            padding: 8px 12px;
+            border: 2px solid var(--gray-border);
+            border-radius: 6px;
+            background: var(--white);
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled):not(.active) {
+            border-color: var(--secondary-color);
+            background: rgba(64, 145, 108, 0.05);
+        }
+
+        .page-btn.active {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+            cursor: default;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-ellipsis {
+            padding: 0 8px;
+            color: var(--text-color);
+            opacity: 0.6;
+        }
+
+        /* Unclosed polygon styling */
+        .cell-input.unclosed {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            border: 2px solid var(--warning-border);
+        }
+
+        /* Warning styling (e.g., area > 4ha without polygon) */
+        .cell-input.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+
+        .cell-input.disabled {
+            background: var(--gray-light);
+            color: var(--gray-medium);
+        }
 
 
 
@@ -627,6 +818,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                 <button class="btn btn-secondary" onclick="deleteSelectedRow()" data-i18n="deleteButton">
                     Delete Row
                 </button>
+                <button class="btn btn-warning" id="closePolygonsBtn" onclick="closeAllPolygons()" data-i18n="closePolygonsButton">
+                    Close All Polygons
+                </button>
+                <select id="rowFilterSelect" class="polygon-format-selector" style="margin-left: auto;" onchange="applyRowFilter(this.value)">
+                    <option value="all" data-i18n-option="filterShowAll">Show All</option>
+                    <option value="errors" data-i18n-option="filterShowErrors">Show Errors</option>
+                    <option value="incomplete" data-i18n-option="filterShowIncomplete">Show Incomplete</option>
+                </select>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div id="paginationControls" class="hidden">
+                <!-- Dynamic pagination buttons will be inserted here -->
             </div>
 
             <div class="spreadsheet-container">
@@ -640,21 +844,29 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                             <th class="col-country" data-i18n="countryHeader">Country</th>
                             <th class="col-lat" data-i18n="latHeader">Latitude</th>
                             <th class="col-lng" data-i18n="lngHeader">Longitude</th>
-                            <th class="col-polygon" data-i18n="polygonHeader">Polygon</th>
+                            <th class="col-polygon">
+                                <span data-i18n="polygonHeader">Polygon</span>
+                                <select id="polygonFormatSelect" class="polygon-format-selector" onchange="changePolygonFormat(this.value)">
+                                    <option value="json" data-i18n-option="polygonFormatJSON">JSON Array</option>
+                                    <option value="kobo" data-i18n-option="polygonFormatKobo">Kobo Format</option>
+                                    <option value="wkt" data-i18n-option="polygonFormatWKT">WKT</option>
+                                    <option value="latlng" data-i18n-option="polygonFormatLatLng">Lat-Lng Pairs</option>
+                                </select>
+                            </th>
                             <th class="col-additional" data-i18n="additionalHeader">Additional Information</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
                             <td class="row-number" onclick="selectRow(this)">1</td>
-                            <td><input type="text" class="cell-input" data-col="producerName" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                            <td><input type="text" class="cell-input selected" data-col="placeRef" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                            <td><input type="text" class="cell-input" data-col="area" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                            <td><input type="text" class="cell-input" data-col="country" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                            <td><input type="text" class="cell-input" data-col="latitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                            <td><input type="text" class="cell-input" data-col="longitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                            <td><input type="text" class="cell-input" data-col="polygon" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                            <td><input type="text" class="cell-input" data-col="additional" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                            <td><input type="text" class="cell-input" data-col="producerName" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                            <td><input type="text" class="cell-input selected" data-col="placeRef" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                            <td><input type="text" class="cell-input" data-col="area" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                            <td><input type="text" class="cell-input" data-col="country" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                            <td><input type="text" class="cell-input" data-col="latitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                            <td><input type="text" class="cell-input" data-col="longitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                            <td><input type="text" class="cell-input" data-col="polygon" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                            <td><input type="text" class="cell-input" data-col="additional" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -726,6 +938,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "No undo state available!",
         "undoSuccessful": "Undo successful!",
         "dataPastedSuccessfully": "Data pasted successfully!",
+        "noDataToPaste": "No data to paste",
+        "pasteDisabledInFilterMode": "Pasting is disabled in filtered mode. Please switch to 'Show All' before pasting.",
         "pastingData": "Pasting data, please wait...",
         "validatingData": "Validating data, please wait...",
         "areaNumericError": "Area must be numeric only (e.g., 12.5)",
@@ -746,8 +960,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "No valid data to export!",
         "geojsonExportedWithFeatures": "GeoJSON exported with {count} features!",
         "confirmExportWithErrors": "Found errors in {count} row(s): {rows}.\n\nThis may be due to incomplete data (e.g., missing Lat/Lng/Area) or invalid formats.\n\nDo you want to export only the valid rows?",
+        "confirmExportWithWarnings": "Found {count} row(s) with missing Area: {rows}.\n\nArea field is missing but rows will be exported.\n\nContinue with export?",
         "exportCancelled": "Export cancelled by user.",
-        "geojsonExportedWithSkips": "GeoJSON exported with {count} features. {skippedCount} rows with errors were skipped."
+        "geojsonExportedWithSkips": "GeoJSON exported with {count} features. {skippedCount} rows with errors were skipped.",
+        "polygonFormatJSON": "JSON Array",
+        "polygonFormatKobo": "Kobo Format",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "Lat-Lng Pairs",
+        "polygonFormatText_json": "Use JSON array format: [[lng,lat],[lng,lat],...] or [[[lng,lat],...]] for polygons",
+        "polygonFormatText_kobo": "Use Kobo format: lat lng alt acc;lat lng alt acc;... (e.g., 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "Use WKT format: POINT(), POLYGON(), MULTIPOLYGON() (e.g., POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "Use Lat-Lng pairs: lat,lng;lat,lng;... or lat lng;lat lng;...",
+        "closePolygonsButton": "Close All Polygons",
+        "polygonsClosedSuccess": "{count} polygon(s) closed successfully!",
+        "noPolygonsToClosed": "No unclosed polygons found.",
+        "polygonNotClosed": "Polygon is not closed (first and last points must match)",
+        "filterShowAll": "Show All",
+        "filterShowErrors": "Show Errors",
+        "filterShowIncomplete": "Show Incomplete",
+        "virtualScrollEnabled": "Virtual scrolling enabled for large dataset"
     }
     </script>
 
@@ -789,6 +1020,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "¡No hay estado para deshacer!",
         "undoSuccessful": "¡Deshacer completado!",
         "dataPastedSuccessfully": "¡Datos pegados con éxito!",
+        "noDataToPaste": "No hay datos para pegar",
+        "pasteDisabledInFilterMode": "Pegar está deshabilitado en modo filtrado. Por favor, cambie a 'Mostrar Todo' antes de pegar.",
         "pastingData": "Pegando datos, por favor espere...",
         "validatingData": "Validando datos, por favor espere...",
         "areaNumericError": "El área debe ser solo numérica (por ejemplo, 12.5)",
@@ -809,8 +1042,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "¡No hay datos válidos para exportar!",
         "geojsonExportedWithFeatures": "GeoJSON exportado con {count} elementos.",
         "confirmExportWithErrors": "Se encontraron errores en {count} fila(s): {rows}.\n\nEsto puede deberse a datos incompletos (p. ej., falta Lat/Lng/Área) o formatos no válidos.\n\n¿Desea exportar solo las filas válidas?",
+        "confirmExportWithWarnings": "Se encontraron {count} fila(s) con Área faltante: {rows}.\n\nEl campo Área falta pero las filas se exportarán.\n\n¿Continuar con la exportación?",
         "exportCancelled": "Exportación cancelada por el usuario.",
-        "geojsonExportedWithSkips": "GeoJSON exportado con {count} características. Se omitieron {skippedCount} filas con errores."
+        "geojsonExportedWithSkips": "GeoJSON exportado con {count} características. Se omitieron {skippedCount} filas con errores.",
+        "polygonFormatJSON": "Array JSON",
+        "polygonFormatKobo": "Formato Kobo",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "Pares Lat-Lng",
+        "polygonFormatText_json": "Use formato de array JSON: [[lng,lat],[lng,lat],...] o [[[lng,lat],...]] para polígonos",
+        "polygonFormatText_kobo": "Use formato Kobo: lat lng alt acc;lat lng alt acc;... (ej.: 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "Use formato WKT: POINT(), POLYGON(), MULTIPOLYGON() (ej.: POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "Use pares Lat-Lng: lat,lng;lat,lng;... o lat lng;lat lng;...",
+        "closePolygonsButton": "Cerrar Todos los Polígonos",
+        "polygonsClosedSuccess": "¡{count} polígono(s) cerrado(s) exitosamente!",
+        "noPolygonsToClosed": "No se encontraron polígonos sin cerrar.",
+        "polygonNotClosed": "El polígono no está cerrado (el primer y último punto deben coincidir)",
+        "filterShowAll": "Mostrar Todo",
+        "filterShowErrors": "Mostrar Errores",
+        "filterShowIncomplete": "Mostrar Incompletos",
+        "virtualScrollEnabled": "Desplazamiento virtual habilitado para conjunto de datos grande"
     }
     </script>
 
@@ -852,6 +1102,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "Aucun état d'annulation disponible !",
         "undoSuccessful": "Annulation réussie !",
         "dataPastedSuccessfully": "Données collées avec succès !",
+        "noDataToPaste": "Aucune donnée à coller",
+        "pasteDisabledInFilterMode": "Le collage est désactivé en mode filtré. Veuillez passer à 'Afficher Tout' avant de coller.",
         "pastingData": "Collage des données, veuillez patienter...",
         "validatingData": "Validation des données, veuillez patienter...",
         "areaNumericError": "La surface doit être uniquement numérique (ex : 12,5)",
@@ -872,8 +1124,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "Aucune donnée valide à exporter !",
         "geojsonExportedWithFeatures": "GeoJSON exporté avec {count} entités !",
         "confirmExportWithErrors": "Des erreurs ont été trouvées dans {count} ligne(s) : {rows}.\n\nCela peut être dû à des données incomplètes (par ex. Lat/Lng/Surface manquants) ou à des formats invalides.\n\nVoulez-vous exporter uniquement les lignes valides ?",
+        "confirmExportWithWarnings": "{count} ligne(s) avec Surface manquante trouvée(s) : {rows}.\n\nLe champ Surface manque mais les lignes seront exportées.\n\nContinuer l'exportation ?",
         "exportCancelled": "Exportation annulée par l'utilisateur.",
-        "geojsonExportedWithSkips": "GeoJSON exporté avec {count} entités. {skippedCount} lignes avec des erreurs ont été ignorées."
+        "geojsonExportedWithSkips": "GeoJSON exporté avec {count} entités. {skippedCount} lignes avec des erreurs ont été ignorées.",
+        "polygonFormatJSON": "Tableau JSON",
+        "polygonFormatKobo": "Format Kobo",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "Paires Lat-Lng",
+        "polygonFormatText_json": "Utilisez le format tableau JSON : [[lng,lat],[lng,lat],...] ou [[[lng,lat],...]] pour les polygones",
+        "polygonFormatText_kobo": "Utilisez le format Kobo : lat lng alt acc;lat lng alt acc;... (ex : 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "Utilisez le format WKT : POINT(), POLYGON(), MULTIPOLYGON() (ex : POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "Utilisez des paires Lat-Lng : lat,lng;lat,lng;... ou lat lng;lat lng;...",
+        "closePolygonsButton": "Fermer Tous les Polygones",
+        "polygonsClosedSuccess": "{count} polygone(s) fermé(s) avec succès !",
+        "noPolygonsToClosed": "Aucun polygone non fermé trouvé.",
+        "polygonNotClosed": "Le polygone n'est pas fermé (les premier et dernier points doivent correspondre)",
+        "filterShowAll": "Tout Afficher",
+        "filterShowErrors": "Afficher les Erreurs",
+        "filterShowIncomplete": "Afficher Incomplets",
+        "virtualScrollEnabled": "Défilement virtuel activé pour grand ensemble de données"
     }
     </script>
 
@@ -915,6 +1184,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "Nenhum estado para desfazer disponível!",
         "undoSuccessful": "Desfazer bem‑sucedido!",
         "dataPastedSuccessfully": "Dados colados com sucesso!",
+        "noDataToPaste": "Nenhum dado para colar",
+        "pasteDisabledInFilterMode": "Colar está desabilitado no modo filtrado. Por favor, mude para 'Mostrar Tudo' antes de colar.",
         "pastingData": "Colando dados, por favor aguarde...",
         "validatingData": "Validando dados, por favor aguarde...",
         "areaNumericError": "Área deve ser somente numérica (ex.: 12.5)",
@@ -935,8 +1206,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "Não há dados válidos para exportar!",
         "geojsonExportedWithFeatures": "GeoJSON exportado com {count} elementos.",
         "confirmExportWithErrors": "Erros encontrados em {count} linha(s): {rows}.\n\nIsso pode ser devido a dados incompletos (ex: Lat/Lng/Área ausentes) ou formatos inválidos.\n\nDeseja exportar apenas as linhas válidas?",
+        "confirmExportWithWarnings": "Encontradas {count} linha(s) com Área ausente: {rows}.\n\nO campo Área está ausente, mas as linhas serão exportadas.\n\nContinuar com a exportação?",
         "exportCancelled": "Exportação cancelada pelo usuário.",
-        "geojsonExportedWithSkips": "GeoJSON exportado com {count} feições. {skippedCount} linhas com erros foram ignoradas."
+        "geojsonExportedWithSkips": "GeoJSON exportado com {count} feições. {skippedCount} linhas com erros foram ignoradas.",
+        "polygonFormatJSON": "Array JSON",
+        "polygonFormatKobo": "Formato Kobo",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "Pares Lat-Lng",
+        "polygonFormatText_json": "Use formato de array JSON: [[lng,lat],[lng,lat],...] ou [[[lng,lat],...]] para polígonos",
+        "polygonFormatText_kobo": "Use formato Kobo: lat lng alt acc;lat lng alt acc;... (ex.: 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "Use formato WKT: POINT(), POLYGON(), MULTIPOLYGON() (ex.: POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "Use pares Lat-Lng: lat,lng;lat,lng;... ou lat lng;lat lng;...",
+        "closePolygonsButton": "Fechar Todos os Polígonos",
+        "polygonsClosedSuccess": "{count} polígono(s) fechado(s) com sucesso!",
+        "noPolygonsToClosed": "Nenhum polígono não fechado encontrado.",
+        "polygonNotClosed": "O polígono não está fechado (os pontos inicial e final devem corresponder)",
+        "filterShowAll": "Mostrar Tudo",
+        "filterShowErrors": "Mostrar Erros",
+        "filterShowIncomplete": "Mostrar Incompletos",
+        "virtualScrollEnabled": "Rolagem virtual ativada para conjunto de dados grande"
     }
     </script>
 
@@ -978,6 +1266,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "Hakuna hatua ya kufuta!",
         "undoSuccessful": "Kufuta kumefanikiwa!",
         "dataPastedSuccessfully": "Data imetiwa kikamilifu!",
+        "noDataToPaste": "Hakuna data ya kubandika",
+        "pasteDisabledInFilterMode": "Kubandika kumezimwa katika hali ya kuchuja. Tafadhali badilisha hadi 'Onyesha Zote' kabla ya kubandika.",
         "pastingData": "Inabandika data, tafadhali subiri...",
         "validatingData": "Inathibitisha data, tafadhali subiri...",
         "areaNumericError": "Eneo linapaswa kuwa nambari tu (mfano, 12.5)",
@@ -998,8 +1288,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "Hakuna data halali ya kupelekwa nje!",
         "geojsonExportedWithFeatures": "GeoJSON imebuniwa na vipengele {count}!",
         "confirmExportWithErrors": "Makosa yamepatikana katika safu {count}: {rows}.\n\nHii inaweza kuwa kutokana na data isiyokamilika (k.m., kukosa Lat/Lng/Eneo) au miundo batili.\n\nUnataka kuhamisha safu halali pekee?",
+        "confirmExportWithWarnings": "Safu {count} zenye Eneo lisilo na taarifa zimepatikana: {rows}.\n\nUga wa Eneo haupo lakini safu zitasafirishwa.\n\nEndelea na usafirishaji?",
         "exportCancelled": "Uhamishaji umeghairiwa na mtumiaji.",
-        "geojsonExportedWithSkips": "GeoJSON imesafirishwa na vipengele {count}. Safu {skippedCount} zenye makosa zilirukwa."
+        "geojsonExportedWithSkips": "GeoJSON imesafirishwa na vipengele {count}. Safu {skippedCount} zenye makosa zilirukwa.",
+        "polygonFormatJSON": "Array ya JSON",
+        "polygonFormatKobo": "Muundo wa Kobo",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "Jozi za Lat-Lng",
+        "polygonFormatText_json": "Tumia muundo wa array ya JSON: [[lng,lat],[lng,lat],...] au [[[lng,lat],...]] kwa poligoni",
+        "polygonFormatText_kobo": "Tumia muundo wa Kobo: lat lng alt acc;lat lng alt acc;... (mfano: 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "Tumia muundo wa WKT: POINT(), POLYGON(), MULTIPOLYGON() (mfano: POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "Tumia jozi za Lat-Lng: lat,lng;lat,lng;... au lat lng;lat lng;...",
+        "closePolygonsButton": "Funga Poligoni Zote",
+        "polygonsClosedSuccess": "Poligoni {count} zimefungwa kwa mafanikio!",
+        "noPolygonsToClosed": "Hakuna poligoni zisizofungwa zilizopatikana.",
+        "polygonNotClosed": "Poligoni haijafungwa (nukta ya kwanza na ya mwisho lazima zilingane)",
+        "filterShowAll": "Onyesha Zote",
+        "filterShowErrors": "Onyesha Makosa",
+        "filterShowIncomplete": "Onyesha Zisizokamilika",
+        "virtualScrollEnabled": "Kuzungusha kwa kawaida kumewezeshwa kwa seti kubwa ya data"
     }
     </script>
 
@@ -1041,6 +1348,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "无可撤销状态！",
         "undoSuccessful": "撤销成功！",
         "dataPastedSuccessfully": "数据粘贴成功！",
+        "noDataToPaste": "没有数据可粘贴",
+        "pasteDisabledInFilterMode": "过滤模式下禁止粘贴。请切换到'显示全部'后再粘贴。",
         "pastingData": "正在粘贴数据，请稍候...",
         "validatingData": "正在验证数据，请稍候...",
         "areaNumericError": "面积只能为数字 (如 12.5)",
@@ -1061,8 +1370,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "无有效数据可导出！",
         "geojsonExportedWithFeatures": "已导出 {count} 个要素的 GeoJSON！",
         "confirmExportWithErrors": "在 {count} 行中发现错误: {rows}。\n\n这可能是由于数据不完整（例如，缺少纬度/经度/面积）或格式无效。\n\n是否只导出有效行？",
+        "confirmExportWithWarnings": "发现 {count} 行缺少面积: {rows}。\n\n面积字段缺失，但行将被导出。\n\n继续导出？",
         "exportCancelled": "用户已取消导出。",
-        "geojsonExportedWithSkips": "已导出包含 {count} 个要素的 GeoJSON。跳过了 {skippedCount} 个有错误的行。"
+        "geojsonExportedWithSkips": "已导出包含 {count} 个要素的 GeoJSON。跳过了 {skippedCount} 个有错误的行。",
+        "polygonFormatJSON": "JSON 数组",
+        "polygonFormatKobo": "Kobo 格式",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "纬度-经度对",
+        "polygonFormatText_json": "使用 JSON 数组格式: [[lng,lat],[lng,lat],...] 或 [[[lng,lat],...]] 用于多边形",
+        "polygonFormatText_kobo": "使用 Kobo 格式: lat lng alt acc;lat lng alt acc;... (例如: 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "使用 WKT 格式: POINT(), POLYGON(), MULTIPOLYGON() (例如: POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "使用纬度-经度对: lat,lng;lat,lng;... 或 lat lng;lat lng;...",
+        "closePolygonsButton": "关闭所有多边形",
+        "polygonsClosedSuccess": "成功关闭了 {count} 个多边形！",
+        "noPolygonsToClosed": "未找到未关闭的多边形。",
+        "polygonNotClosed": "多边形未关闭（首末点必须匹配）",
+        "filterShowAll": "显示全部",
+        "filterShowErrors": "显示错误",
+        "filterShowIncomplete": "显示未完成",
+        "virtualScrollEnabled": "已为大数据集启用虚拟滚动"
     }
     </script>
 
@@ -1104,6 +1430,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "ไม่มีสถานะย้อนกลับ!",
         "undoSuccessful": "ย้อนกลับสำเร็จ!",
         "dataPastedSuccessfully": "วางข้อมูลสำเร็จ!",
+        "noDataToPaste": "ไม่มีข้อมูลให้วาง",
+        "pasteDisabledInFilterMode": "การวางถูกปิดใช้งานในโหมดกรอง โปรดเปลี่ยนเป็น 'แสดงทั้งหมด' ก่อนวาง",
         "pastingData": "กำลังวางข้อมูล โปรดรอสักครู่...",
         "validatingData": "กำลังตรวจสอบข้อมูล โปรดรอ...",
         "areaNumericError": "พื้นที่ต้องเป็นตัวเลขเท่านั้น (เช่น 12.5)",
@@ -1124,8 +1452,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "ไม่มีข้อมูลที่ถูกต้องสำหรับส่งออก!",
         "geojsonExportedWithFeatures": "ส่งออก GeoJSON พร้อม {count} ฟีเจอร์!",
         "confirmExportWithErrors": "พบข้อผิดพลาดใน {count} แถว: {rows}\n\nอาจเกิดจากข้อมูลไม่สมบูรณ์ (เช่น ไม่มี Lat/Lng/Area) หรือรูปแบบไม่ถูกต้อง\n\nคุณต้องการส่งออกเฉพาะแถวที่ถูกต้องหรือไม่?",
+        "confirmExportWithWarnings": "พบ {count} แถวที่ขาดพื้นที่: {rows}\n\nฟิลด์พื้นที่ขาดหายไป แต่แถวจะถูกส่งออก\n\nดำเนินการส่งออกต่อหรือไม่?",
         "exportCancelled": "ผู้ใช้ยกเลิกการส่งออก",
-        "geojsonExportedWithSkips": "ส่งออก GeoJSON พร้อม {count} ฟีเจอร์ ข้าม {skippedCount} แถวที่มีข้อผิดพลาดไป"
+        "geojsonExportedWithSkips": "ส่งออก GeoJSON พร้อม {count} ฟีเจอร์ ข้าม {skippedCount} แถวที่มีข้อผิดพลาดไป",
+        "polygonFormatJSON": "อาร์เรย์ JSON",
+        "polygonFormatKobo": "รูปแบบ Kobo",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "คู่ Lat-Lng",
+        "polygonFormatText_json": "ใช้รูปแบบอาร์เรย์ JSON: [[lng,lat],[lng,lat],...] หรือ [[[lng,lat],...]] สำหรับรูปหลายเหลี่ยม",
+        "polygonFormatText_kobo": "ใช้รูปแบบ Kobo: lat lng alt acc;lat lng alt acc;... (เช่น: 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "ใช้รูปแบบ WKT: POINT(), POLYGON(), MULTIPOLYGON() (เช่น: POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "ใช้คู่ Lat-Lng: lat,lng;lat,lng;... หรือ lat lng;lat lng;...",
+        "closePolygonsButton": "ปิดรูปหลายเหลี่ยมทั้งหมด",
+        "polygonsClosedSuccess": "ปิดรูปหลายเหลี่ยม {count} รายการสำเร็จ!",
+        "noPolygonsToClosed": "ไม่พบรูปหลายเหลี่ยมที่ยังไม่ปิด",
+        "polygonNotClosed": "รูปหลายเหลี่ยมไม่ปิด (จุดแรกและจุดสุดท้ายต้องตรงกัน)",
+        "filterShowAll": "แสดงทั้งหมด",
+        "filterShowErrors": "แสดงข้อผิดพลาด",
+        "filterShowIncomplete": "แสดงไม่สมบูรณ์",
+        "virtualScrollEnabled": "เปิดใช้งานการเลื่อนเสมือนสำหรับชุดข้อมูลขนาดใหญ่"
     }
     </script>
     
@@ -1167,6 +1512,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noUndoState": "ምንም የመመለሻ ሁኔታ የለም!",
         "undoSuccessful": "ተመለሰ!",
         "dataPastedSuccessfully": "ዳታ ተሰናከለ!",
+        "noDataToPaste": "የሚለጠፍ ዳታ የለም",
+        "pasteDisabledInFilterMode": "በተጣራ ሁነታ ውስጥ መለጠፍ ተሰናክሏል። እባክዎን ከመለጠፍዎ በፊት ወደ 'ሁሉንም አሳይ' ይቀይሩ።",
         "pastingData": "ዳታ በመለጠፍ ላይ ነው፣ እባክዎ ይጠብቁ...",
         "validatingData": "ዳታ በማረጋገጥ ላይ ነው፣ እባክዎ ይጠብቁ...",
         "areaNumericError": "ቦታ ቁጥር ብቻ መሆን አለበት (ለምሳሌ፣ 12.5)",
@@ -1187,8 +1534,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "noValidDataToExport": "ለማስወገድ ትክክለኛ ዳታ የለም!",
         "geojsonExportedWithFeatures": "GeoJSON በ {count} ባህሪያት ተላክ!",
         "confirmExportWithErrors": "በ {count} ረድፍ(ዎች) ውስጥ ስህተቶች ተገኝተዋል: {rows}።\n\nይህ ባልተሟላ መረጃ (ለምሳሌ፣ የጎደለ Lat/Lng/Area) ወይም ልክ ባልሆኑ ቅርጸቶች ምክንያት ሊሆን ይችላል።\n\nትክክለኛዎቹን ረድፎች ብቻ መላክ ይፈልጋሉ?",
+        "confirmExportWithWarnings": "{count} ረድፎች የጎደለ ቦታ ተገኝተዋል: {rows}።\n\nየቦታ መስክ ይጎድላል ግን ረድፎች ይላካሉ።\n\nመላክ መቀጠል ይፈልጋሉ?",
         "exportCancelled": "መላክ በተጠቃሚ ተሰርዟል።",
-        "geojsonExportedWithSkips": "GeoJSON ከ {count} ባህሪያት ጋር ተልኳል። ስህተት ያለባቸው {skippedCount} ረድፎች ተዘለዋል።"
+        "geojsonExportedWithSkips": "GeoJSON ከ {count} ባህሪያት ጋር ተልኳል። ስህተት ያለባቸው {skippedCount} ረድፎች ተዘለዋል።",
+        "polygonFormatJSON": "JSON ዝርዝር",
+        "polygonFormatKobo": "የKobo ቅርጸት",
+        "polygonFormatWKT": "WKT",
+        "polygonFormatLatLng": "የLat-Lng ጥንዶች",
+        "polygonFormatText_json": "የJSON ዝርዝር ቅርጸት ይጠቀሙ: [[lng,lat],[lng,lat],...] ወይም [[[lng,lat],...]] ለፖሊጎኖች",
+        "polygonFormatText_kobo": "የKobo ቅርጸት ይጠቀሙ: lat lng alt acc;lat lng alt acc;... (ለምሳሌ: 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+        "polygonFormatText_wkt": "የWKT ቅርጸት ይጠቀሙ: POINT(), POLYGON(), MULTIPOLYGON() (ለምሳሌ: POLYGON((lng lat, lng lat, ...)))",
+        "polygonFormatText_latlng": "የLat-Lng ጥንዶች ይጠቀሙ: lat,lng;lat,lng;... ወይም lat lng;lat lng;...",
+        "closePolygonsButton": "ሁሉንም ፖሊጎኖች ዝጋ",
+        "polygonsClosedSuccess": "{count} ፖሊጎን(ኖች) በተሳካ ሁኔታ ተዘግተዋል!",
+        "noPolygonsToClosed": "ያልተዘጉ ፖሊጎኖች አልተገኙም።",
+        "polygonNotClosed": "ፖሊጎን አልተዘጋም (የመጀመሪያው እና የመጨረሻው ነጥብ መዛመድ አለባቸው)",
+        "filterShowAll": "ሁሉንም አሳይ",
+        "filterShowErrors": "ስህተቶችን አሳይ",
+        "filterShowIncomplete": "ያልተሟሉ አሳይ",
+        "virtualScrollEnabled": "ለትልቅ የውሂብ ስብስብ ምናባዊ ማሸብለል ነቅቷል"
     }
     </script>
                     
@@ -1202,6 +1566,96 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         let undoState = null;
         let currentLanguage = 'en';
         let translations = {};
+        let currentPolygonFormat = 'json'; // Default polygon format
+        let currentRowFilter = 'all'; // Row filter: all, errors, incomplete
+        
+        // Pagination state - Single source of truth
+        let fullDataset = []; // Single source of truth for all row data
+        let currentPage = 1; // Current page number
+        let pageSize = 1000; // Maximum rows per page
+
+        // Web Worker for parallel validation
+        let validationWorker = null;
+        let validationCallbacks = new Map();
+        let validationCallbackId = 0;
+
+        // Create validation worker
+        function createValidationWorker() {
+            if (validationWorker) return validationWorker;
+            
+            // Worker code as string (includes all parsing logic)
+            const workerCode = `
+                ${parseStrictFloat.toString()}
+                ${parseJSONArray.toString()}
+                ${parseKoboFormat.toString()}
+                ${parseWKT.toString()}
+                ${parseWKTRings.toString()}
+                ${parseLatLngPairs.toString()}
+                ${getArrayDepth.toString()}
+                ${arePointsEqual.toString()}
+                ${closeRing.toString()}
+                ${parsePolygon.toString()}
+                
+                // Message handler
+                self.onmessage = function(e) {
+                    const { rows, format, callbackId } = e.data;
+                    const results = [];
+                    
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row.polygon && row.polygon.trim()) {
+                            try {
+                                const parsed = parsePolygon(row.polygon, format);
+                                results.push({
+                                    index: row.index,
+                                    isValid: parsed.isValid,
+                                    isClosed: parsed.isClosed,
+                                    errorMessage: parsed.error || '',
+                                    type: parsed.type,
+                                    coordinates: parsed.coordinates
+                                });
+                            } catch (e) {
+                                results.push({
+                                    index: row.index,
+                                    isValid: false,
+                                    isClosed: false,
+                                    errorMessage: e.message,
+                                    type: null,
+                                    coordinates: null
+                                });
+                            }
+                        } else {
+                            results.push({
+                                index: row.index,
+                                isValid: true,
+                                isClosed: true,
+                                errorMessage: '',
+                                type: null,
+                                coordinates: null
+                            });
+                        }
+                    }
+                    
+                    self.postMessage({ results, callbackId });
+                };
+            `;
+            
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+            validationWorker = new Worker(workerUrl);
+            
+            // Handle messages from worker
+            validationWorker.onmessage = function(e) {
+                const { results, callbackId } = e.data;
+                const callback = validationCallbacks.get(callbackId);
+                if (callback) {
+                    callback(results);
+                    validationCallbacks.delete(callbackId);
+                }
+            };
+            
+            return validationWorker;
+        }
 
         // Initialize translations
         function initializeTranslations() {
@@ -1231,6 +1685,730 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             localStorage.setItem('georoots-language', lang);
             document.documentElement.lang = lang;
             updateAllText();
+        }
+
+        // Validate rows using Web Worker
+        function validateRowsWithWorker(rows, format, callback) {
+            const worker = createValidationWorker();
+            const callbackId = validationCallbackId++;
+            validationCallbacks.set(callbackId, callback);
+            
+            // Prepare data for worker (only polygon data and index)
+            const rowData = rows.map((row, idx) => ({
+                index: row.index !== undefined ? row.index : idx,
+                polygon: row.polygon || ''
+            }));
+            
+            worker.postMessage({ rows: rowData, format, callbackId });
+        }
+
+        // Change polygon format
+        function changePolygonFormat(format) {
+            currentPolygonFormat = format;
+            localStorage.setItem('georoots-polygon-format', format);
+            updatePolygonFormatHint();
+            
+            if (fullDataset.length > 0) {
+                // Using pagination - re-validate fullDataset using worker
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                const loadingText = document.getElementById('loadingText');
+                loadingText.textContent = getText('validatingData');
+                loadingOverlay.classList.add('show');
+                
+                // Prepare data for worker
+                const rowsToValidate = fullDataset.map((rowData, index) => ({
+                    index: index,
+                    polygon: rowData.polygon || ''
+                }));
+                
+                // Validate in worker
+                validateRowsWithWorker(rowsToValidate, format, (results) => {
+                    // Update fullDataset with results and recalculate areas
+                    results.forEach(result => {
+                        const rowData = fullDataset[result.index];
+                        if (rowData) {
+                            if (!rowData.errors) rowData.errors = {};
+                            if (!rowData.errorMessages) rowData.errorMessages = {};
+                            if (!rowData.warnings) rowData.warnings = {};
+                            
+                            if (!result.isValid) {
+                                rowData.errors.polygon = true;
+                                rowData.polygonUnclosed = false;
+                                rowData.errorMessages.polygon = result.errorMessage || getText('polygonFormatError');
+                            } else if (!result.isClosed) {
+                                rowData.errors.polygon = true;
+                                rowData.polygonUnclosed = true;
+                                rowData.errorMessages.polygon = getText('polygonNotClosed');
+                            } else {
+                                rowData.errors.polygon = false;
+                                rowData.polygonUnclosed = false;
+                                rowData.errorMessages.polygon = '';
+                                
+                                // Recalculate area for valid polygons
+                                if (result.type === 'Polygon' || result.type === 'MultiPolygon') {
+                                    let totalArea = 0;
+                                    
+                                    if (result.type === 'Polygon') {
+                                        totalArea = calculatePolygonArea(result.coordinates[0]);
+                                    } else if (result.type === 'MultiPolygon') {
+                                        result.coordinates.forEach(polygon => {
+                                            totalArea += calculatePolygonArea(polygon[0]);
+                                        });
+                                    }
+                                    
+                                    if (totalArea > 0) {
+                                        rowData.area = totalArea.toString();
+                                        // Clear any area warning since we now have a valid polygon
+                                        rowData.errors.area = false;
+                                        rowData.warnings.area = false;
+                                        rowData.errorMessages.area = '';
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Re-render current page
+                    renderCurrentPage();
+                    
+                    // Update close polygons button visibility
+                    updateClosePolygonsButton();
+                    
+                    // Hide loading overlay
+                    loadingOverlay.classList.remove('show');
+                });
+            } else {
+                // Re-validate only polygon cells with data (normal mode)
+                const polygonInputs = document.querySelectorAll('.cell-input[data-col="polygon"]');
+                
+                if (polygonInputs.length > 500) {
+                    // Use worker for large datasets
+                    const loadingOverlay = document.getElementById('loadingOverlay');
+                    const loadingText = document.getElementById('loadingText');
+                    loadingText.textContent = getText('validatingData');
+                    loadingOverlay.classList.add('show');
+                    
+                    const rowsToValidate = Array.from(polygonInputs)
+                        .filter(input => input.value && input.value.trim())
+                        .map((input, idx) => ({
+                            index: idx,
+                            polygon: input.value,
+                            element: input
+                        }));
+                    
+                    const rowData = rowsToValidate.map(r => ({ index: r.index, polygon: r.polygon }));
+                    
+                    validateRowsWithWorker(rowData, format, (results) => {
+                        // Update DOM with results
+                        results.forEach(result => {
+                            const input = rowsToValidate[result.index].element;
+                            if (input) {
+                                input.classList.remove('error', 'unclosed');
+                                if (!result.isValid) {
+                                    input.classList.add('error');
+                                } else if (!result.isClosed) {
+                                    input.classList.add('unclosed');
+                                }
+                            }
+                        });
+                        
+                        updateClosePolygonsButton();
+                        loadingOverlay.classList.remove('show');
+                    });
+                } else {
+                    // Small dataset, validate synchronously
+                    polygonInputs.forEach(input => {
+                        if (input.value && input.value.trim()) {
+                            validateCell(input);
+                        }
+                    });
+                    updateClosePolygonsButton();
+                }
+            }
+        }
+
+        // Update polygon format hint text
+        function updatePolygonFormatHint() {
+            const hintElement = document.querySelector('[data-i18n="polygonFormatText"]');
+            if (hintElement) {
+                const hintKey = `polygonFormatText_${currentPolygonFormat}`;
+                const hintText = getText(hintKey);
+                hintElement.textContent = hintText;
+            }
+        }
+
+        // ===== POLYGON PARSERS =====
+
+        /**
+         * Strict number parsing - validates that string contains only valid numeric characters
+         * before parsing to prevent parseFloat() from accepting strings like "1a1" as "1"
+         */
+        function parseStrictFloat(str) {
+            const trimmed = str.trim();
+            // Regex matches valid numbers: -123, 123.45, .5, -.75, etc.
+            if (!/^-?(\d+\.?\d*|\.\d+)$/.test(trimmed)) {
+                return NaN;
+            }
+            return parseFloat(trimmed);
+        }
+
+        /**
+         * Parse JSON Array format - handles Point, Polygon, MultiPolygon
+         * Formats: [lng,lat], [[lng,lat],...], [[[lng,lat],...],...], [[[[lng,lat],...],...],...]
+         */
+        function parseJSONArray(value) {
+            try {
+                const parsed = JSON.parse(value);
+                
+                // Detect geometry type based on nesting level
+                if (!Array.isArray(parsed)) {
+                    throw new Error('Invalid JSON: Must be an array');
+                }
+                
+                // Check nesting depth
+                const depth = getArrayDepth(parsed);
+                
+                if (depth === 1) {
+                    // [lng, lat] - Point
+                    if (parsed.length === 2 && !isNaN(parsed[0]) && !isNaN(parsed[1])) {
+                        return {
+                            type: 'Point',
+                            coordinates: parsed,
+                            isValid: true,
+                            isClosed: true // Points don't need closing
+                        };
+                    }
+                    throw new Error('Invalid Point format');
+                }
+                else if (depth === 2) {
+                    // [[lng,lat],...] - Polygon or MultiPoint
+                    const allArePoints = parsed.every(item => 
+                        Array.isArray(item) && item.length === 2 && !isNaN(item[0]) && !isNaN(item[1])
+                    );
+                    
+                    if (!allArePoints) {
+                        throw new Error('Invalid coordinate pairs');
+                    }
+                    
+                    if (parsed.length < 3) {
+                        throw new Error('Polygon must have at least 3 points');
+                    }
+                    
+                    const isClosed = arePointsEqual(parsed[0], parsed[parsed.length - 1]);
+                    
+                    return {
+                        type: 'Polygon',
+                        coordinates: [parsed], // Wrap in array for GeoJSON Polygon format
+                        isValid: true,
+                        isClosed: isClosed
+                    };
+                }
+                else if (depth === 3) {
+                    // [[[lng,lat],...]] or [[[lng,lat],...],[[lng,lat],...]] - Polygon with holes or MultiPolygon
+                    const rings = parsed;
+                    const allRingsValid = rings.every(ring => 
+                        Array.isArray(ring) && ring.length >= 3 && 
+                        ring.every(point => Array.isArray(point) && point.length === 2 && !isNaN(point[0]) && !isNaN(point[1]))
+                    );
+                    
+                    if (!allRingsValid) {
+                        throw new Error('Invalid polygon rings');
+                    }
+                    
+                    // Check if all rings are closed
+                    const allClosed = rings.every(ring => arePointsEqual(ring[0], ring[ring.length - 1]));
+                    
+                    return {
+                        type: 'Polygon',
+                        coordinates: rings,
+                        isValid: true,
+                        isClosed: allClosed
+                    };
+                }
+                else if (depth === 4) {
+                    // [[[[lng,lat],...],...]] - MultiPolygon
+                    const polygons = parsed;
+                    const allPolygonsValid = polygons.every(polygon =>
+                        Array.isArray(polygon) && polygon.every(ring =>
+                            Array.isArray(ring) && ring.length >= 3 &&
+                            ring.every(point => Array.isArray(point) && point.length === 2 && !isNaN(point[0]) && !isNaN(point[1]))
+                        )
+                    );
+                    
+                    if (!allPolygonsValid) {
+                        throw new Error('Invalid MultiPolygon structure');
+                    }
+                    
+                    // Check if all rings in all polygons are closed
+                    const allClosed = polygons.every(polygon =>
+                        polygon.every(ring => arePointsEqual(ring[0], ring[ring.length - 1]))
+                    );
+                    
+                    return {
+                        type: 'MultiPolygon',
+                        coordinates: polygons,
+                        isValid: true,
+                        isClosed: allClosed
+                    };
+                }
+                else {
+                    throw new Error('Invalid array nesting depth');
+                }
+            } catch (e) {
+                return {
+                    type: null,
+                    coordinates: null,
+                    isValid: false,
+                    isClosed: false,
+                    error: e.message
+                };
+            }
+        }
+
+        /**
+         * Parse Kobo format: lat lng alt acc;lat lng alt acc;...
+         */
+        function parseKoboFormat(value) {
+            try {
+                const points = value.split(';').map(point => point.trim()).filter(point => point !== '');
+                
+                if (points.length < 3) {
+                    throw new Error('Polygon must have at least 3 points');
+                }
+                
+                const coordinates = [];
+                const metadata = { altitudes: [], accuracies: [] };
+                
+                for (let i = 0; i < points.length; i++) {
+                    const parts = points[i].split(/\s+/);
+                    if (parts.length !== 4) {
+                        throw new Error(`Point ${i + 1}: Must have exactly 4 values (lat lng alt acc)`);
+                    }
+                    
+                    const [latStr, lngStr, altStr, accStr] = parts;
+                    const lat = parseStrictFloat(latStr);
+                    const lng = parseStrictFloat(lngStr);
+                    const alt = parseStrictFloat(altStr);
+                    const acc = parseStrictFloat(accStr);
+                    
+                    if (isNaN(lat)) {
+                        throw new Error(`Point ${i + 1}: Invalid latitude - contains invalid characters (${latStr})`);
+                    }
+                    if (lat < -90 || lat > 90) {
+                        throw new Error(`Point ${i + 1}: Latitude out of range (${latStr})`);
+                    }
+                    if (isNaN(lng)) {
+                        throw new Error(`Point ${i + 1}: Invalid longitude - contains invalid characters (${lngStr})`);
+                    }
+                    if (lng < -180 || lng > 180) {
+                        throw new Error(`Point ${i + 1}: Longitude out of range (${lngStr})`);
+                    }
+                    if (isNaN(alt)) {
+                        throw new Error(`Point ${i + 1}: Invalid altitude - contains invalid characters (${altStr})`);
+                    }
+                    if (isNaN(acc)) {
+                        throw new Error(`Point ${i + 1}: Invalid accuracy - contains invalid characters (${accStr})`);
+                    }
+                    if (acc < 0) {
+                        throw new Error(`Point ${i + 1}: Accuracy must be non-negative (${accStr})`);
+                    }
+                    
+                    coordinates.push([lng, lat]); // GeoJSON format: [lng, lat]
+                    metadata.altitudes.push(alt);
+                    metadata.accuracies.push(acc);
+                }
+                
+                const isClosed = arePointsEqual(coordinates[0], coordinates[coordinates.length - 1]);
+                
+                return {
+                    type: 'Polygon',
+                    coordinates: [coordinates],
+                    isValid: true,
+                    isClosed: isClosed,
+                    metadata: metadata
+                };
+            } catch (e) {
+                return {
+                    type: null,
+                    coordinates: null,
+                    isValid: false,
+                    isClosed: false,
+                    error: e.message
+                };
+            }
+        }
+
+        /**
+         * Parse WKT format: POINT(), POLYGON(), MULTIPOLYGON(), MULTIPOINT()
+         */
+        function parseWKT(value) {
+            try {
+                const trimmed = value.trim().toUpperCase();
+                
+                // POINT
+                if (trimmed.startsWith('POINT')) {
+                    const match = trimmed.match(/POINT\s*\(\s*([^)]+)\s*\)/i);
+                    if (!match) throw new Error('Invalid POINT format');
+                    
+                    const coords = match[1].split(/\s+/).map(parseStrictFloat);
+                    if (coords.length !== 2 || coords.some(isNaN)) {
+                        throw new Error('Invalid POINT coordinates - contains invalid characters');
+                    }
+                    
+                    return {
+                        type: 'Point',
+                        coordinates: coords,
+                        isValid: true,
+                        isClosed: true
+                    };
+                }
+                
+                // MULTIPOINT
+                else if (trimmed.startsWith('MULTIPOINT')) {
+                    const match = trimmed.match(/MULTIPOINT\s*\(\s*(.+)\s*\)/i);
+                    if (!match) throw new Error('Invalid MULTIPOINT format');
+                    
+                    const pointsStr = match[1];
+                    const points = [];
+                    
+                    // Check if points are in parentheses format: ((lng lat), (lng lat))
+                    if (pointsStr.includes('(')) {
+                        const pointMatches = pointsStr.matchAll(/\(\s*([^)]+)\s*\)/g);
+                        
+                        for (const pm of pointMatches) {
+                            const coords = pm[1].split(/\s+/).map(parseStrictFloat);
+                            if (coords.length !== 2 || coords.some(isNaN)) {
+                                throw new Error('Invalid MULTIPOINT coordinates - contains invalid characters');
+                            }
+                            points.push(coords);
+                        }
+                    } else {
+                        // Alternative format without parentheses: (lng lat, lng lat, ...)
+                        const pointPairs = pointsStr.split(',');
+                        for (const pair of pointPairs) {
+                            const coords = pair.trim().split(/\s+/).map(parseStrictFloat);
+                            if (coords.length !== 2 || coords.some(isNaN)) {
+                                throw new Error('Invalid MULTIPOINT coordinates - contains invalid characters');
+                            }
+                            points.push(coords);
+                        }
+                    }
+                    
+                    if (points.length === 0) {
+                        throw new Error('MULTIPOINT must have at least one point');
+                    }
+                    
+                    return {
+                        type: 'MultiPoint',
+                        coordinates: points,
+                        isValid: true,
+                        isClosed: true
+                    };
+                }
+                
+                // POLYGON
+                else if (trimmed.startsWith('POLYGON') && !trimmed.startsWith('MULTIPOLYGON')) {
+                    const match = trimmed.match(/POLYGON\s*\(\s*(.+)\s*\)/i);
+                    if (!match) throw new Error('Invalid POLYGON format');
+                    
+                    const ringsStr = match[1];
+                    const rings = parseWKTRings(ringsStr);
+                    
+                    if (rings.length === 0) {
+                        throw new Error('POLYGON must have at least one ring');
+                    }
+                    
+                    const allClosed = rings.every(ring => arePointsEqual(ring[0], ring[ring.length - 1]));
+                    
+                    return {
+                        type: 'Polygon',
+                        coordinates: rings,
+                        isValid: true,
+                        isClosed: allClosed
+                    };
+                }
+                
+                // MULTIPOLYGON
+                else if (trimmed.startsWith('MULTIPOLYGON')) {
+                    const match = trimmed.match(/MULTIPOLYGON\s*\(\s*(.+)\s*\)/i);
+                    if (!match) throw new Error('Invalid MULTIPOLYGON format');
+                    
+                    const polygonsStr = match[1];
+                    const polygons = [];
+                    
+                    // Extract each polygon
+                    let depth = 0;
+                    let currentPoly = '';
+                    for (let i = 0; i < polygonsStr.length; i++) {
+                        const char = polygonsStr[i];
+                        if (char === '(') {
+                            depth++;
+                            if (depth > 1) currentPoly += char;
+                        } else if (char === ')') {
+                            depth--;
+                            if (depth > 0) currentPoly += char;
+                            if (depth === 0 && currentPoly.trim()) {
+                                const rings = parseWKTRings(currentPoly);
+                                if (rings.length > 0) polygons.push(rings);
+                                currentPoly = '';
+                            }
+                        } else if (depth > 0) {
+                            currentPoly += char;
+                        }
+                    }
+                    
+                    if (polygons.length === 0) {
+                        throw new Error('MULTIPOLYGON must have at least one polygon');
+                    }
+                    
+                    const allClosed = polygons.every(polygon =>
+                        polygon.every(ring => arePointsEqual(ring[0], ring[ring.length - 1]))
+                    );
+                    
+                    return {
+                        type: 'MultiPolygon',
+                        coordinates: polygons,
+                        isValid: true,
+                        isClosed: allClosed
+                    };
+                }
+                
+                throw new Error('Unknown WKT geometry type');
+            } catch (e) {
+                return {
+                    type: null,
+                    coordinates: null,
+                    isValid: false,
+                    isClosed: false,
+                    error: e.message
+                };
+            }
+        }
+
+        /**
+         * Helper function to parse WKT rings
+         */
+        function parseWKTRings(ringsStr) {
+            const rings = [];
+            let depth = 0;
+            let currentRing = '';
+            
+            for (let i = 0; i < ringsStr.length; i++) {
+                const char = ringsStr[i];
+                if (char === '(') {
+                    depth++;
+                    if (depth === 1) currentRing = '';
+                } else if (char === ')') {
+                    if (depth === 1) {
+                        const coords = currentRing.trim().split(',').map(pair => {
+                            const nums = pair.trim().split(/\s+/).map(parseStrictFloat);
+                            if (nums.length !== 2 || nums.some(isNaN)) {
+                                throw new Error('Invalid coordinates in ring - contains invalid characters');
+                            }
+                            return nums;
+                        });
+                        if (coords.length >= 3) {
+                            rings.push(coords);
+                        }
+                        currentRing = '';
+                    }
+                    depth--;
+                } else if (depth === 1) {
+                    currentRing += char;
+                }
+            }
+            
+            return rings;
+        }
+
+        /**
+         * Parse Lat-Lng Pairs format: "lat,lng lat,lng" or "lat lng, lat lng"
+         */
+        function parseLatLngPairs(value) {
+            try {
+                // Try to detect delimiter pattern
+                const hasSemicolon = value.includes(';');
+                const hasComma = value.includes(',');
+                
+                let points = [];
+                
+                if (hasSemicolon) {
+                    // Format: lat,lng;lat,lng or lat lng;lat lng
+                    points = value.split(';').map(p => p.trim()).filter(p => p !== '');
+                } else {
+                    // Try to split by newlines or double spaces
+                    points = value.split(/[\n\r]+|  +/).map(p => p.trim()).filter(p => p !== '');
+                }
+                
+                if (points.length < 3) {
+                    throw new Error('Must have at least 3 coordinate pairs');
+                }
+                
+                const coordinates = [];
+                
+                for (let i = 0; i < points.length; i++) {
+                    const point = points[i];
+                    let lat, lng;
+                    
+                    if (point.includes(',')) {
+                        // Format: lat,lng
+                        const parts = point.split(',').map(p => p.trim());
+                        if (parts.length !== 2) {
+                            throw new Error(`Point ${i + 1}: Invalid format`);
+                        }
+                        lat = parseStrictFloat(parts[0]);
+                        lng = parseStrictFloat(parts[1]);
+                        if (isNaN(lat) || isNaN(lng)) {
+                            throw new Error(`Point ${i + 1}: Contains invalid characters`);
+                        }
+                    } else {
+                        // Format: lat lng (space separated)
+                        const parts = point.split(/\s+/);
+                        if (parts.length < 2) {
+                            throw new Error(`Point ${i + 1}: Invalid format`);
+                        }
+                        lat = parseStrictFloat(parts[0]);
+                        lng = parseStrictFloat(parts[1]);
+                        if (isNaN(lat) || isNaN(lng)) {
+                            throw new Error(`Point ${i + 1}: Contains invalid characters`);
+                        }
+                    }
+                    
+                    if (lat < -90 || lat > 90) {
+                        throw new Error(`Point ${i + 1}: Latitude out of range`);
+                    }
+                    if (lng < -180 || lng > 180) {
+                        throw new Error(`Point ${i + 1}: Longitude out of range`);
+                    }
+                    
+                    coordinates.push([lng, lat]); // GeoJSON format: [lng, lat]
+                }
+                
+                const isClosed = arePointsEqual(coordinates[0], coordinates[coordinates.length - 1]);
+                
+                return {
+                    type: 'Polygon',
+                    coordinates: [coordinates],
+                    isValid: true,
+                    isClosed: isClosed
+                };
+            } catch (e) {
+                return {
+                    type: null,
+                    coordinates: null,
+                    isValid: false,
+                    isClosed: false,
+                    error: e.message
+                };
+            }
+        }
+
+        /**
+         * Auto-detect and parse polygon format
+         */
+        function parsePolygon(value, format = null) {
+            const trimmed = value.trim();
+            
+            // If format is specified, use that parser
+            if (format === 'json') {
+                return parseJSONArray(trimmed);
+            } else if (format === 'kobo') {
+                return parseKoboFormat(trimmed);
+            } else if (format === 'wkt') {
+                return parseWKT(trimmed);
+            } else if (format === 'latlng') {
+                return parseLatLngPairs(trimmed);
+            }
+            
+            // Auto-detect format
+            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                return parseJSONArray(trimmed);
+            } else if (/^(POINT|POLYGON|MULTIPOLYGON|MULTIPOINT)/i.test(trimmed)) {
+                return parseWKT(trimmed);
+            } else if (/^\d+\.?\d*\s+-?\d+\.?\d*\s+\d+\.?\d*\s+\d+\.?\d*/.test(trimmed)) {
+                // Kobo format: lat lng alt acc
+                return parseKoboFormat(trimmed);
+            } else {
+                // Default to lat-lng pairs
+                return parseLatLngPairs(trimmed);
+            }
+        }
+
+        // ===== HELPER FUNCTIONS =====
+
+        /**
+         * Get the depth of nested arrays
+         */
+        function getArrayDepth(arr) {
+            if (!Array.isArray(arr)) return 0;
+            if (arr.length === 0) return 1;
+            if (!Array.isArray(arr[0])) return 1;
+            return 1 + getArrayDepth(arr[0]);
+        }
+
+        /**
+         * Check if two points are equal (within tolerance)
+         */
+        function arePointsEqual(point1, point2, tolerance = 0.0000001) {
+            if (!point1 || !point2) return false;
+            return Math.abs(point1[0] - point2[0]) < tolerance && 
+                   Math.abs(point1[1] - point2[1]) < tolerance;
+        }
+
+        /**
+         * Close a ring by appending the first point to the end
+         */
+        function closeRing(ring) {
+            if (ring.length < 3) return ring;
+            if (arePointsEqual(ring[0], ring[ring.length - 1])) {
+                return ring; // Already closed
+            }
+            return [...ring, ring[0]];
+        }
+
+        /**
+         * Convert parsed geometry back to string format
+         */
+        function geometryToString(parsed, format) {
+            if (!parsed || !parsed.isValid) return '';
+            
+            const coords = parsed.coordinates;
+            
+            if (format === 'json') {
+                return JSON.stringify(coords);
+            } else if (format === 'kobo' && parsed.metadata) {
+                // Reconstruct Kobo format with metadata
+                const ring = coords[0];
+                const parts = [];
+                for (let i = 0; i < ring.length; i++) {
+                    const [lng, lat] = ring[i];
+                    const alt = parsed.metadata.altitudes[i] || 0;
+                    const acc = parsed.metadata.accuracies[i] || 0;
+                    parts.push(`${lat} ${lng} ${alt} ${acc}`);
+                }
+                return parts.join(';');
+            } else if (format === 'wkt') {
+                if (parsed.type === 'Point') {
+                    return `POINT(${coords[0]} ${coords[1]})`;
+                } else if (parsed.type === 'Polygon') {
+                    const rings = coords.map(ring =>
+                        '(' + ring.map(p => `${p[0]} ${p[1]}`).join(', ') + ')'
+                    ).join(', ');
+                    return `POLYGON(${rings})`;
+                } else if (parsed.type === 'MultiPolygon') {
+                    const polygons = coords.map(polygon =>
+                        '(' + polygon.map(ring =>
+                            '(' + ring.map(p => `${p[0]} ${p[1]}`).join(', ') + ')'
+                        ).join(', ') + ')'
+                    ).join(', ');
+                    return `MULTIPOLYGON(${polygons})`;
+                }
+            } else if (format === 'latlng') {
+                const ring = coords[0];
+                return ring.map(p => `${p[1]},${p[0]}`).join(';');
+            }
+            
+            return JSON.stringify(coords);
         }
 
         // Update all text elements with translations
@@ -1267,11 +2445,43 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         // Initialize the table with 10 empty rows
         function initializeTable() {
             const tbody = document.getElementById('tableBody');
+            
+            // Initialize fullDataset with 10 empty rows
+            fullDataset = [];
+            for (let i = 0; i < 10; i++) {
+                fullDataset.push({
+                    producerName: '',
+                    placeRef: '',
+                    area: '',
+                    country: '',
+                    latitude: '',
+                    longitude: '',
+                    polygon: '',
+                    additional: '',
+                    polygonUnclosed: false,
+                    errors: {
+                        producerName: false,
+                        placeRef: false,
+                        area: false,
+                        country: false,
+                        latitude: false,
+                        longitude: false,
+                        polygon: false,
+                        additional: false
+                    },
+                    warnings: {},
+                    errorMessages: {}
+                });
+            }
+            
+            // Render the initial 10 rows from fullDataset
             let newRowsHtml = '';
             for (let i = 0; i < 10; i++) {
                 newRowsHtml += getEmptyRowHtml(i + 1);
             }
             tbody.innerHTML = newRowsHtml;
+            
+            console.log('Table initialized with 10 empty rows in fullDataset');
         }
 
         // Save current state for undo
@@ -1312,16 +2522,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
         function getEmptyRowHtml(rowCount) {
             return `
-                <tr>
+                <tr data-index="${rowCount - 1}">
                     <td class="row-number" onclick="selectRow(this)">${rowCount}</td>
-                    <td><input type="text" class="cell-input" data-col="producerName" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                    <td><input type="text" class="cell-input" data-col="placeRef" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                    <td><input type="text" class="cell-input" data-col="area" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                    <td><input type="text" class="cell-input" data-col="country" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                    <td><input type="text" class="cell-input" data-col="latitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                    <td><input type="text" class="cell-input" data-col="longitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                    <td><input type="text" class="cell-input" data-col="polygon" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
-                    <td><input type="text" class="cell-input" data-col="additional" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="producerName" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="placeRef" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="area" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="country" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="latitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="longitude" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="polygon" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
+                    <td><input type="text" class="cell-input" data-col="additional" oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)"></td>
                 </tr>
             `;
         }
@@ -1366,6 +2576,150 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             input.classList.add('selected');
         }
 
+        // Handle keyboard navigation in spreadsheet
+        function handleCellKeydown(event) {
+            const input = event.target;
+            if (!input.classList.contains('cell-input')) return;
+
+            const row = input.closest('tr');
+            const cell = input.parentElement;
+            const tbody = document.getElementById('tableBody');
+            const allRows = Array.from(tbody.children);
+            const rowIndex = allRows.indexOf(row);
+            const cellIndex = Array.from(row.children).indexOf(cell);
+            
+            let nextInput = null;
+
+            // Arrow keys and navigation
+            switch(event.key) {
+                // TEMPORARILY DISABLED: Left/Right arrow keys interfere with text editing within cells
+                // Users need to be able to move the cursor within text without jumping to adjacent cells
+                // These may be re-enabled in the future with a modifier key (e.g., Ctrl+ArrowLeft/Right)
+                
+                // case 'ArrowLeft':
+                //     event.preventDefault();
+                //     // Move to previous cell in same row
+                //     if (cellIndex > 1) { // Skip row number cell (index 0)
+                //         nextInput = row.children[cellIndex - 1]?.querySelector('.cell-input');
+                //     }
+                //     break;
+
+                // case 'ArrowRight':
+                //     event.preventDefault();
+                //     // Move to next cell in same row, wrap to next row if at end
+                //     if (cellIndex < row.children.length - 1) {
+                //         nextInput = row.children[cellIndex + 1]?.querySelector('.cell-input');
+                //     } else if (rowIndex < allRows.length - 1) {
+                //         // Wrap to first cell of next row
+                //         nextInput = allRows[rowIndex + 1]?.children[1]?.querySelector('.cell-input');
+                //     }
+                //     break;
+
+                case 'Tab':
+                    event.preventDefault();
+                    // Move to next cell, wrap to next row if at end
+                    if (cellIndex < row.children.length - 1) {
+                        nextInput = row.children[cellIndex + 1]?.querySelector('.cell-input');
+                    } else if (rowIndex < allRows.length - 1) {
+                        // Wrap to first cell of next row
+                        nextInput = allRows[rowIndex + 1]?.children[1]?.querySelector('.cell-input');
+                    }
+                    break;
+
+                case 'ArrowUp':
+                    event.preventDefault();
+                    // Move to same cell in previous row
+                    if (rowIndex > 0) {
+                        nextInput = allRows[rowIndex - 1]?.children[cellIndex]?.querySelector('.cell-input');
+                    }
+                    break;
+
+                case 'ArrowDown':
+                case 'Enter':
+                    event.preventDefault();
+                    // Move to same cell in next row
+                    if (rowIndex < allRows.length - 1) {
+                        nextInput = allRows[rowIndex + 1]?.children[cellIndex]?.querySelector('.cell-input');
+                    }
+                    break;
+            }
+
+            // Focus and select the next input
+            if (nextInput) {
+                nextInput.focus();
+                selectCell(nextInput);
+            }
+        }
+
+        // Parse TSV data with proper handling of quoted fields containing newlines
+        function parseTSVData(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let insideQuotes = false;
+            let i = 0;
+            
+            while (i < text.length) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+                
+                if (char === '"') {
+                    if (insideQuotes && nextChar === '"') {
+                        // Escaped quote: "" becomes "
+                        currentCell += '"';
+                        i += 2;
+                        continue;
+                    } else {
+                        // Toggle quote state
+                        insideQuotes = !insideQuotes;
+                        i++;
+                        continue;
+                    }
+                }
+                
+                if (!insideQuotes) {
+                    if (char === '\t') {
+                        // End of cell
+                        currentRow.push(currentCell.trim());
+                        currentCell = '';
+                        i++;
+                        continue;
+                    } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
+                        // End of row
+                        currentRow.push(currentCell.trim());
+                        if (currentRow.length > 0) {
+                            rows.push(currentRow);
+                        }
+                        currentRow = [];
+                        currentCell = '';
+                        i += (char === '\r' ? 2 : 1);
+                        continue;
+                    }
+                } else {
+                    // Inside quotes - replace newlines with double space
+                    if (char === '\n' || (char === '\r' && nextChar === '\n')) {
+                        currentCell += '  '; // Double space
+                        i += (char === '\r' ? 2 : 1);
+                        continue;
+                    }
+                }
+                
+                // Regular character
+                currentCell += char;
+                i++;
+            }
+            
+            // Handle last cell/row
+            if (currentCell.length > 0 || currentRow.length > 0) {
+                currentRow.push(currentCell.trim());
+                if (currentRow.length > 0) {
+                    rows.push(currentRow);
+                }
+            }
+            
+            return rows;
+        }
+
         // Handle paste operation with performance optimizations
         function handlePaste(event) {
             event.preventDefault();
@@ -1376,12 +2730,45 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             
             if (!selectedCell) return;
             
-            const rows = pastedData.split('\n').filter(row => row.trim() !== '');
+            // Prevent pasting in filtered mode to avoid confusion
+            if (currentRowFilter !== 'all') {
+                showStatus(getText('pasteDisabledInFilterMode'), 'error');
+                return;
+            }
+            
+            // Parse TSV data with proper quote handling
+            const parsedRows = parseTSVData(pastedData);
+            
+            // Remove ALL trailing empty rows (Excel copies entire columns with thousands of empty rows)
+            // This preserves empty rows in the MIDDLE for alignment, but removes trailing ones
+            while (parsedRows.length > 0 && parsedRows[parsedRows.length - 1].every(cell => cell === '')) {
+                parsedRows.pop();
+            }
+            
+            // If all rows are empty, don't paste anything
+            if (parsedRows.length === 0 || parsedRows.every(row => row.every(cell => cell === ''))) {
+                console.log('Paste cancelled: all rows are empty');
+                showStatus(getText('noDataToPaste') || 'No data to paste', 'error');
+                return;
+            }
+            
+            // Warn if pasting more than 50,000 rows (likely a mistake)
+            const MAX_REASONABLE_ROWS = 50000;
+            if (parsedRows.length > MAX_REASONABLE_ROWS) {
+                const proceed = confirm(`You're about to paste ${parsedRows.length.toLocaleString()} rows. This may cause performance issues. Continue?`);
+                if (!proceed) {
+                    console.log('Paste cancelled by user');
+                    return;
+                }
+            }
+            
+            console.log(`Preparing to paste ${parsedRows.length} rows (after trimming trailing empty rows)`);
+            
             const PASTE_THRESHOLD = 50; // Show loader for more than 50 rows
             const loadingOverlay = document.getElementById('loadingOverlay');
             const loadingText = document.getElementById('loadingText');
 
-            const showLoader = rows.length > PASTE_THRESHOLD;
+            const showLoader = parsedRows.length > PASTE_THRESHOLD;
 
             if (showLoader) {
                 loadingText.textContent = getText('pastingData');
@@ -1390,58 +2777,259 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
             // Use setTimeout to allow the browser to render the loader before the heavy work
             setTimeout(() => {
-                // Phase 1: Fast DOM manipulation
+                // Phase 1: Ensure all affected rows are in DOM with existing data from fullDataset
                 const tbody = document.getElementById('tableBody');
                 const allTableRows = Array.from(tbody.children);
                 const currentRow = selectedCell.closest('tr');
                 const currentRowIndex = allTableRows.indexOf(currentRow);
                 const currentCellIndex = Array.from(currentRow.children).indexOf(selectedCell.parentNode) - 1;
 
-                const rowsToAdd = (currentRowIndex + rows.length) - allTableRows.length;
+                // Get the actual fullDataset index from data-index attribute (important when pagination is active)
+                const datasetIndex = parseInt(currentRow.getAttribute('data-index')) || currentRowIndex;
+                
+                console.log(`Paste starting at DOM row ${currentRowIndex} (fullDataset[${datasetIndex}]), cell ${currentCellIndex}, pasting ${parsedRows.length} rows`);
+
+                const totalRowsNeeded = currentRowIndex + parsedRows.length;
+                const rowsToAdd = totalRowsNeeded - allTableRows.length;
+                
                 if (rowsToAdd > 0) {
+                    // Add new rows and populate them with existing fullDataset data if available
                     let newRowsHtml = '';
+                    const startNewRowIndex = allTableRows.length;
+                    
+                    // Calculate the correct fullDataset index for new rows
+                    // If pagination is active, use the datasetIndex of the last DOM row + 1
+                    // Otherwise, use DOM index = dataset index
+                    let nextDatasetIndex;
+                    if (allTableRows.length > 0) {
+                        const lastRow = allTableRows[allTableRows.length - 1];
+                        const lastDatasetIndex = parseInt(lastRow.getAttribute('data-index'));
+                        nextDatasetIndex = isNaN(lastDatasetIndex) ? startNewRowIndex : lastDatasetIndex + 1;
+                    } else {
+                        nextDatasetIndex = 0;
+                    }
+                    
                     for (let i = 0; i < rowsToAdd; i++) {
-                        newRowsHtml += getEmptyRowHtml(allTableRows.length + i + 1);
+                        const newDatasetIndex = nextDatasetIndex + i;
+                        const rowNumber = newDatasetIndex + 1;
+                        
+                        // Check if this row exists in fullDataset
+                        if (newDatasetIndex < fullDataset.length) {
+                            // Use existing data from fullDataset
+                            newRowsHtml += createRowHtml(rowNumber, fullDataset[newDatasetIndex], newDatasetIndex);
+                        } else {
+                            // Create empty row with correct data-index
+                            // Note: getEmptyRowHtml uses rowNumber-1 for data-index, so pass rowNumber directly
+                            newRowsHtml += getEmptyRowHtml(newDatasetIndex + 1);
+                        }
                     }
                     tbody.insertAdjacentHTML('beforeend', newRowsHtml);
+                    console.log(`Added ${rowsToAdd} new DOM rows with dataset indices starting at ${nextDatasetIndex}`);
                 }
                 
                 const updatedAllTableRows = Array.from(tbody.children);
 
-                rows.forEach((rowData, rowOffset) => {
-                    const cells = rowData.split('\t');
+                // Track which columns are being pasted (for smart validation)
+                let maxPastedColumns = 0;
+                parsedRows.forEach((cellsArray, rowOffset) => {
+                    maxPastedColumns = Math.max(maxPastedColumns, cellsArray.length);
+                    
                     const targetRow = updatedAllTableRows[currentRowIndex + rowOffset];
-                    if (!targetRow) return;
+                    if (!targetRow) {
+                        console.warn(`Paste: Missing target row at DOM index ${currentRowIndex + rowOffset}`);
+                        return;
+                    }
                     
                     const inputs = targetRow.querySelectorAll('.cell-input');
-                    cells.forEach((cellData, cellOffset) => {
+                    cellsArray.forEach((cellData, cellOffset) => {
                         const targetCellIndex = currentCellIndex + cellOffset;
                         if (targetCellIndex < inputs.length) {
-                            inputs[targetCellIndex].value = cellData.trim();
+                            inputs[targetCellIndex].value = cellData; // Already trimmed by parser
                         }
                     });
                 });
 
-                // Phase 2: Validation
+                console.log(`Pasted ${parsedRows.length} rows into DOM rows ${currentRowIndex} to ${currentRowIndex + parsedRows.length - 1}`);
+
+                // Phase 2: Smart Validation using Web Worker
                 if (showLoader) {
                     loadingText.textContent = getText('validatingData');
                 }
 
-                // Another timeout to allow the "Validating..." text to render
+                // Use setTimeout to allow UI update
                 setTimeout(() => {
-                    try {
                         const startValidationIndex = currentRowIndex;
-                        const endValidationIndex = currentRowIndex + rows.length;
+                        const endValidationIndex = currentRowIndex + parsedRows.length;
+                    
+                    // Find polygon column index
+                    const polygonColIndex = 6; // Polygon is column 6
+                    const isPolygonPasted = currentCellIndex <= polygonColIndex && 
+                                           (currentCellIndex + maxPastedColumns) > polygonColIndex;
+                    
+                    // If polygon column was pasted and we have many rows, use worker
+                    if (isPolygonPasted && parsedRows.length > 100) {
+                        // Collect polygon data for worker validation
+                        const polygonRows = [];
                         for (let i = startValidationIndex; i < endValidationIndex; i++) {
                             const rowToValidate = updatedAllTableRows[i];
                             if (rowToValidate) {
-                                rowToValidate.querySelectorAll('.cell-input').forEach(validateCell);
+                                const inputs = rowToValidate.querySelectorAll('.cell-input');
+                                const polygonInput = inputs[polygonColIndex];
+                                if (polygonInput && polygonInput.value && polygonInput.value.trim()) {
+                                    polygonRows.push({
+                                        absoluteIndex: i,
+                                        polygon: polygonInput.value,
+                                        element: polygonInput
+                                    });
+                                }
                             }
                         }
+                        
+                        console.log(`Polygon validation: Processing rows ${startValidationIndex}-${endValidationIndex}, found ${polygonRows.length} rows with polygon data`);
+                        if (polygonRows.length > 0) {
+                            console.log(`First polygon row: ${polygonRows[0].absoluteIndex}, Last polygon row: ${polygonRows[polygonRows.length - 1].absoluteIndex}`);
+                        }
+                        
+                        if (polygonRows.length > 0) {
+                            // Validate polygons in worker - use array index, not DOM index
+                            const workerData = polygonRows.map((r, arrayIndex) => ({ index: arrayIndex, polygon: r.polygon }));
+                            console.log(`Sending ${polygonRows.length} polygons to worker for validation (rows ${startValidationIndex}-${endValidationIndex})`);
+                            validateRowsWithWorker(workerData, currentPolygonFormat, (results) => {
+                                // Apply results to DOM
+                                console.log(`Worker returned ${results.length} validation results`);
+                                
+                                let errorCount = 0;
+                                let unclosedCount = 0;
+                                let validCount = 0;
+                                
+                                results.forEach(result => {
+                                    const polygonRow = polygonRows[result.index];
+                                    if (polygonRow && polygonRow.element) {
+                                        const input = polygonRow.element;
+                                        const row = input.closest('tr');
+                                        
+                                        input.classList.remove('error', 'unclosed');
+                                        if (!result.isValid) {
+                                            input.classList.add('error');
+                                            // Create tooltip for error
+                                            const errorMessage = result.errorMessage || getText('polygonFormatError');
+                                            showTooltip(input, errorMessage);
+                                            errorCount++;
+                                        } else if (!result.isClosed) {
+                                            input.classList.add('unclosed');
+                                            // Create tooltip for unclosed polygon
+                                            showTooltip(input, getText('polygonNotClosed'));
+                                            unclosedCount++;
+                                            // Still process unclosed polygons to disable lat/lng and calculate area
+                                            const parsed = {
+                                                isValid: true,
+                                                isClosed: false,
+                                                type: result.type,
+                                                coordinates: result.coordinates
+                                            };
+                                            processValidPolygon(row, parsed);
+                                        } else if (result.isValid && result.isClosed && result.coordinates) {
+                                            // Valid polygon - process without re-parsing
+                                            const parsed = {
+                                                isValid: true,
+                                                isClosed: true,
+                                                type: result.type,
+                                                coordinates: result.coordinates
+                                            };
+                                            processValidPolygon(row, parsed);
+                                            validCount++;
+                                        }
+                                    }
+                                });
+                                
+                                console.log(`Worker validation complete: ${validCount} valid, ${errorCount} errors, ${unclosedCount} unclosed`);
+                                
+                                // Validate other non-polygon columns synchronously (fast)
+                                for (let i = startValidationIndex; i < endValidationIndex; i++) {
+                                    const rowToValidate = updatedAllTableRows[i];
+                                    if (rowToValidate) {
+                                        const inputs = rowToValidate.querySelectorAll('.cell-input');
+                                        for (let colOffset = 0; colOffset < maxPastedColumns; colOffset++) {
+                                            const targetCellIndex = currentCellIndex + colOffset;
+                                            if (targetCellIndex < inputs.length && targetCellIndex !== polygonColIndex) {
+                                                const input = inputs[targetCellIndex];
+                                                if (input.value && input.value.trim()) {
+                                                    validateCell(input);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                updateClosePolygonsButton();
+                                
+                                // Merge pasted rows to fullDataset (preserving other data)
+                                mergeDOMRowsToDataset(startValidationIndex, endValidationIndex);
+                                
+                                // Don't reset to page 1 if we're not using pagination
+                                // Only render if we have more than one page of data
+                                if (fullDataset.length > pageSize) {
+                                    // Calculate which page the pasted data is on using datasetIndex
+                                    const pastedDataPage = Math.floor(datasetIndex / pageSize) + 1;
+                                    currentPage = pastedDataPage;
+                                    renderCurrentPage();
+                                } else {
+                                    // No pagination needed, just update pagination UI
+                                    updatePaginationUI();
+                                }
+                                
+                                showStatus(getText('dataPastedSuccessfully'), 'success');
+                                if (showLoader) {
+                                    loadingOverlay.classList.remove('show');
+                                }
+                            });
+                        } else {
+                            // No polygons to validate with worker
+                            finishPasteValidation();
+                        }
+                    } else {
+                        // Small dataset or no polygons, validate synchronously
+                        finishPasteValidation();
+                    }
+                    
+                    function finishPasteValidation() {
+                        try {
+                            for (let i = startValidationIndex; i < endValidationIndex; i++) {
+                                const rowToValidate = updatedAllTableRows[i];
+                                if (rowToValidate) {
+                                    const inputs = rowToValidate.querySelectorAll('.cell-input');
+                                    for (let colOffset = 0; colOffset < maxPastedColumns; colOffset++) {
+                                        const targetCellIndex = currentCellIndex + colOffset;
+                                        if (targetCellIndex < inputs.length) {
+                                            const input = inputs[targetCellIndex];
+                                            if (input.value && input.value.trim()) {
+                                                validateCell(input);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Merge pasted rows to fullDataset (preserving other data)
+                            mergeDOMRowsToDataset(startValidationIndex, endValidationIndex);
+                            
+                            // Don't reset to page 1 if we're not using pagination
+                            // Only render if we have more than one page of data
+                            if (fullDataset.length > pageSize) {
+                                // Calculate which page the pasted data is on using datasetIndex
+                                const pastedDataPage = Math.floor(datasetIndex / pageSize) + 1;
+                                currentPage = pastedDataPage;
+                                renderCurrentPage();
+                            } else {
+                                // No pagination needed, just update pagination UI
+                                updatePaginationUI();
+                            }
+                            
                         showStatus(getText('dataPastedSuccessfully'), 'success');
                     } finally {
                         if (showLoader) {
                             loadingOverlay.classList.remove('show');
+                            }
                         }
                     }
                 }, 10);
@@ -1455,37 +3043,63 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             let isValid = true;
             let errorMessage = '';
             
-            // Remove existing error states
-            input.classList.remove('error');
+            // Remove existing error and warning states
+            input.classList.remove('error', 'unclosed', 'disabled', 'warning');
             hideTooltip(input);
             
             if (value === '') {
+                // If polygon field is cleared, re-enable other fields
+                if (col === 'polygon') {
+                    const row = input.closest('tr');
+                    const areaInput = row.querySelector('[data-col="area"]');
+                    const latInput = row.querySelector('[data-col="latitude"]');
+                    const lngInput = row.querySelector('[data-col="longitude"]');
+                    
+                    if (areaInput) areaInput.classList.remove('disabled');
+                    if (latInput) latInput.classList.remove('disabled');
+                    if (lngInput) lngInput.classList.remove('disabled');
+                    
+                    // Clear calculated area
+                    if (areaInput && areaInput.dataset.calculatedValue) {
+                        areaInput.value = '';
+                        delete areaInput.dataset.calculatedValue;
+                    }
+                    
+                    // Re-validate area field to check if warning should be shown
+                    if (areaInput && areaInput.value.trim()) {
+                        validateCell(areaInput);
+                    }
+                }
                 return; // Empty cells are valid (unless required by other fields)
             }
             
             switch (col) {
                 case 'area':
+                    // Don't validate if this is a disabled (auto-calculated) field
+                    if (input.classList.contains('disabled') && input.dataset.calculatedValue) {
+                        return;
+                    }
+                    
                     if (!/^\d+(\.\d+)?$/.test(value)) {
                         isValid = false;
                         errorMessage = getText('areaNumericError');
                     } else {
+                        // Check if area > 4ha without valid polygon (warning, not error)
                         const areaValue = parseFloat(value);
-                        if (areaValue >= 4) {
+                        if (areaValue > 4) {
                             const row = input.closest('tr');
                             const polygonInput = row.querySelector('[data-col="polygon"]');
-                            const polygonValue = polygonInput.value.trim();
-                            let isPolygonStructurallyValid = false;
-                            if (polygonValue) {
-                                try {
-                                    const parsed = JSON.parse(polygonValue);
-                                    if (Array.isArray(parsed) && parsed.length >= 3) {
-                                        isPolygonStructurallyValid = true;
-                                    }
-                                } catch(e) { /* ignore */ }
-                            }
-                            if (!isPolygonStructurallyValid) {
-                                isValid = false;
+                            const hasValidPolygon = polygonInput && polygonInput.value.trim() && 
+                                                   !polygonInput.classList.contains('error') &&
+                                                   !polygonInput.classList.contains('unclosed');
+                            
+                            if (!hasValidPolygon) {
+                                // Add warning class (not error - allows export)
+                                input.classList.add('warning');
                                 errorMessage = getText('areaPolygonRequired');
+                                showTooltip(input, errorMessage);
+                                syncRowToDataset(input);
+                                return; // Don't remove warning in the isValid block below
                             }
                         }
                     }
@@ -1499,6 +3113,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                     break;
                     
                 case 'latitude':
+                    // Don't validate if disabled (polygon present)
+                    if (input.classList.contains('disabled')) return;
+                    
                     if (!/^-?\d+(\.\d+)?$/.test(value)) {
                         isValid = false;
                         errorMessage = getText('latitudeNumericError');
@@ -1512,6 +3129,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                     break;
                     
                 case 'longitude':
+                    // Don't validate if disabled (polygon present)
+                    if (input.classList.contains('disabled')) return;
+                    
                     if (!/^-?\d+(\.\d+)?$/.test(value)) {
                         isValid = false;
                         errorMessage = getText('longitudeNumericError');
@@ -1525,28 +3145,36 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                     break;
                     
                 case 'polygon':
-                    try {
-                        const parsed = JSON.parse(value);
-                        if (!Array.isArray(parsed) || parsed.length < 3) {
-                            throw new Error('Invalid polygon format');
-                        }
-                        parsed.forEach(coord => {
-                            if (!Array.isArray(coord) || coord.length !== 2 || 
-                                isNaN(coord[0]) || isNaN(coord[1])) {
-                                throw new Error('Invalid coordinate format');
-                            }
-                        });
-                        
-                        const row = input.closest('tr');
-                        const areaInput = row.querySelector('[data-col="area"]');
-                        if (areaInput.value.trim()) {
-                            setTimeout(() => validateCell(areaInput), 10);
-                        }
-                        
-                    } catch (e) {
+                    // Parse polygon using current format or auto-detect
+                    const parsed = parsePolygon(value, currentPolygonFormat);
+                    
+                    if (!parsed.isValid) {
                         isValid = false;
-                        errorMessage = getText('polygonFormatError');
+                        errorMessage = parsed.error || getText('polygonFormatError');
+                    } else if (!parsed.isClosed) {
+                        // Polygon is valid but not closed - special state
+                        input.classList.add('unclosed');
+                        errorMessage = getText('polygonNotClosed');
+                        showTooltip(input, errorMessage);
+                        
+                        // Still process as valid for area calculation
+                        const row = input.closest('tr');
+                        processValidPolygon(row, parsed);
+                        
+                        // Show close polygons button
+                        updateClosePolygonsButton();
+                        
+                        // Sync to fullDataset before returning
+                        syncRowToDataset(input);
+                        return;
+                    } else {
+                        // Valid and closed polygon
+                        const row = input.closest('tr');
+                        processValidPolygon(row, parsed);
                     }
+                    
+                    // Update close polygons button visibility
+                    updateClosePolygonsButton();
                     break;
             }
             
@@ -1554,20 +3182,816 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                 input.classList.add('error');
                 showTooltip(input, errorMessage);
             }
+            
+            // Sync changes to fullDataset if it exists
+            syncRowToDataset(input);
         }
 
-        // Show validation tooltip
+        /**
+         * Sync a single row's data to fullDataset
+         */
+        function syncRowToDataset(input) {
+            if (fullDataset.length === 0) return; // Not using pagination yet
+            
+            const row = input.closest('tr');
+            const dataIndex = parseInt(row.getAttribute('data-index'));
+            
+            if (isNaN(dataIndex)) return;
+            
+            // Ensure fullDataset is large enough
+            while (fullDataset.length <= dataIndex) {
+                fullDataset.push({
+                    producerName: '',
+                    placeRef: '',
+                    area: '',
+                    country: '',
+                    latitude: '',
+                    longitude: '',
+                    polygon: '',
+                    additional: '',
+                    polygonUnclosed: false,
+                    errors: {},
+                    warnings: {},
+                    errorMessages: {}
+                });
+            }
+            
+            const inputs = row.querySelectorAll('.cell-input');
+            
+            // Update fullDataset with current values and error states
+            // Preserve parsedGeometry if it exists
+            fullDataset[dataIndex] = {
+                producerName: inputs[0]?.value || '',
+                placeRef: inputs[1]?.value || '',
+                area: inputs[2]?.value || '',
+                country: inputs[3]?.value || '',
+                latitude: inputs[4]?.value || '',
+                longitude: inputs[5]?.value || '',
+                polygon: inputs[6]?.value || '',
+                additional: inputs[7]?.value || '',
+                polygonUnclosed: inputs[6]?.classList.contains('unclosed') || false,
+                parsedGeometry: fullDataset[dataIndex]?.parsedGeometry, // Preserve parsed geometry
+                errors: {
+                    producerName: inputs[0]?.classList.contains('error') || false,
+                    placeRef: inputs[1]?.classList.contains('error') || false,
+                    area: inputs[2]?.classList.contains('error') || false,
+                    country: inputs[3]?.classList.contains('error') || false,
+                    latitude: inputs[4]?.classList.contains('error') || false,
+                    longitude: inputs[5]?.classList.contains('error') || false,
+                    polygon: inputs[6]?.classList.contains('error') || inputs[6]?.classList.contains('unclosed') || false,
+                    additional: inputs[7]?.classList.contains('error') || false
+                },
+                warnings: {
+                    area: inputs[2]?.classList.contains('warning') || false
+                },
+                errorMessages: {
+                    producerName: inputs[0]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                    placeRef: inputs[1]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                    area: inputs[2]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                    country: inputs[3]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                    latitude: inputs[4]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                    longitude: inputs[5]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                    polygon: inputs[6]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                    additional: inputs[7]?.parentNode.querySelector('.validation-tooltip')?.textContent || ''
+                }
+            };
+        }
+
+        /**
+         * Process a valid polygon - calculate area, disable fields, etc.
+         */
+        function processValidPolygon(row, parsed) {
+            const areaInput = row.querySelector('[data-col="area"]');
+            const latInput = row.querySelector('[data-col="latitude"]');
+            const lngInput = row.querySelector('[data-col="longitude"]');
+            const polygonInput = row.querySelector('[data-col="polygon"]');
+            
+            // Disable and clear lat/lng fields
+            if (latInput) {
+                latInput.value = '';
+                latInput.classList.add('disabled');
+                latInput.classList.remove('error');
+                hideTooltip(latInput);
+            }
+            if (lngInput) {
+                lngInput.value = '';
+                lngInput.classList.add('disabled');
+                lngInput.classList.remove('error');
+                hideTooltip(lngInput);
+            }
+            
+            // Calculate area for Polygon and MultiPolygon types
+            if (parsed.type === 'Polygon' || parsed.type === 'MultiPolygon') {
+                let totalArea = 0;
+                
+                if (parsed.type === 'Polygon') {
+                    // Calculate area of outer ring only (first ring)
+                    totalArea = calculatePolygonArea(parsed.coordinates[0]);
+                } else if (parsed.type === 'MultiPolygon') {
+                    // Sum areas of all polygons (outer rings only)
+                    parsed.coordinates.forEach(polygon => {
+                        totalArea += calculatePolygonArea(polygon[0]);
+                    });
+                }
+                
+                if (areaInput && totalArea > 0) {
+                    areaInput.value = totalArea.toString();
+                    areaInput.dataset.calculatedValue = totalArea.toString();
+                    areaInput.classList.add('disabled');
+                    areaInput.classList.remove('error', 'warning');
+                    hideTooltip(areaInput);
+                }
+            }
+            
+            // Store parsed data for later use
+            if (polygonInput) {
+                polygonInput.dataset.parsedGeometry = JSON.stringify(parsed);
+            }
+        }
+
+        /**
+         * Calculate polygon area using spherical geometry
+         */
+        function calculatePolygonArea(coordinates) {
+            if (!coordinates || coordinates.length < 3) return 0;
+            
+            const EARTH_RADIUS = 6378137; // Earth's radius in meters
+            
+            function toRadians(degrees) {
+                return degrees * Math.PI / 180;
+            }
+            
+            function sphericalExcess(coords) {
+                let total = 0;
+                const coordsLength = coords.length;
+                
+                for (let i = 0; i < coordsLength; i++) {
+                    const j = (i + 1) % coordsLength;
+                    const xi = toRadians(coords[i][0]); // longitude
+                    const yi = toRadians(coords[i][1]); // latitude
+                    const xj = toRadians(coords[j][0]); // longitude
+                    const yj = toRadians(coords[j][1]); // latitude
+                    
+                    total += (xj - xi) * (2 + Math.sin(yi) + Math.sin(yj));
+                }
+                
+                return Math.abs(total) / 2;
+            }
+            
+            const excess = sphericalExcess(coordinates);
+            const areaInSquareMeters = excess * EARTH_RADIUS * EARTH_RADIUS;
+            const areaInHectares = areaInSquareMeters / 10000; // Convert to hectares
+            
+            return Math.round(areaInHectares * 100) / 100; // Round to 2 decimal places
+        }
+
+        /**
+         * Update the visibility of Close Polygons button
+         */
+        function updateClosePolygonsButton() {
+            const unclosedInputs = document.querySelectorAll('.cell-input.unclosed[data-col="polygon"]');
+            const button = document.getElementById('closePolygonsBtn');
+            
+            if (button) {
+                if (unclosedInputs.length > 0) {
+                    button.classList.add('show');
+                } else {
+                    button.classList.remove('show');
+                }
+            }
+        }
+
+        /**
+         * Close all unclosed polygons in the table
+         */
+        function closeAllPolygons() {
+            saveUndoState();
+            
+            const unclosedInputs = document.querySelectorAll('.cell-input.unclosed[data-col="polygon"]');
+            let closedCount = 0;
+            
+            unclosedInputs.forEach(input => {
+                const value = input.value.trim();
+                if (!value) return;
+                
+                // Parse the polygon
+                const parsed = parsePolygon(value, currentPolygonFormat);
+                
+                if (parsed.isValid && !parsed.isClosed) {
+                    // Close all rings in the geometry
+                    if (parsed.type === 'Polygon') {
+                        parsed.coordinates = parsed.coordinates.map(ring => closeRing(ring));
+                    } else if (parsed.type === 'MultiPolygon') {
+                        parsed.coordinates = parsed.coordinates.map(polygon =>
+                            polygon.map(ring => closeRing(ring))
+                        );
+                    }
+                    
+                    // Convert back to string format
+                    parsed.isClosed = true;
+                    const closedValue = geometryToString(parsed, currentPolygonFormat);
+                    
+                    if (closedValue) {
+                        input.value = closedValue;
+                        closedCount++;
+                    }
+                }
+            });
+            
+            // Re-validate all modified cells
+            unclosedInputs.forEach(input => {
+                validateCell(input);
+            });
+            
+            // Update button visibility
+            updateClosePolygonsButton();
+            
+            // Show status message
+            if (closedCount > 0) {
+                showStatus(getText('polygonsClosedSuccess', { count: closedCount }), 'success');
+            } else {
+                showStatus(getText('noPolygonsToClosed'), 'info');
+            }
+        }
+
+        /**
+         * Apply row filter to show/hide rows based on filter criteria
+         */
+        function applyRowFilter(filter) {
+            // CRITICAL: Sync current DOM data to fullDataset BEFORE switching views
+            // This prevents data loss when switching between filters
+            const tbody = document.getElementById('tableBody');
+            const domRows = Array.from(tbody.children);
+            
+            domRows.forEach((row, index) => {
+                const datasetIdx = parseInt(row.getAttribute('data-index'));
+                if (!isNaN(datasetIdx)) {
+                    const inputs = row.querySelectorAll('.cell-input');
+                    
+                    // Ensure fullDataset has an entry for this index
+                    while (fullDataset.length <= datasetIdx) {
+                        fullDataset.push({
+                            producerName: '',
+                            placeRef: '',
+                            area: '',
+                            country: '',
+                            latitude: '',
+                            longitude: '',
+                            polygon: '',
+                            additional: '',
+                            polygonUnclosed: false,
+                            errors: {},
+                            warnings: {},
+                            errorMessages: {}
+                        });
+                    }
+                    
+                    // Update fullDataset with current DOM values
+                    fullDataset[datasetIdx] = {
+                        producerName: inputs[0]?.value || '',
+                        placeRef: inputs[1]?.value || '',
+                        area: inputs[2]?.value || '',
+                        country: inputs[3]?.value || '',
+                        latitude: inputs[4]?.value || '',
+                        longitude: inputs[5]?.value || '',
+                        polygon: inputs[6]?.value || '',
+                        additional: inputs[7]?.value || '',
+                        polygonUnclosed: inputs[6]?.classList.contains('unclosed') || false,
+                        parsedGeometry: fullDataset[datasetIdx]?.parsedGeometry, // Preserve parsed geometry
+                        errors: {
+                            producerName: inputs[0]?.classList.contains('error') || false,
+                            placeRef: inputs[1]?.classList.contains('error') || false,
+                            area: inputs[2]?.classList.contains('error') || false,
+                            country: inputs[3]?.classList.contains('error') || false,
+                            latitude: inputs[4]?.classList.contains('error') || false,
+                            longitude: inputs[5]?.classList.contains('error') || false,
+                            polygon: inputs[6]?.classList.contains('error') || inputs[6]?.classList.contains('unclosed') || false,
+                            additional: inputs[7]?.classList.contains('error') || false
+                        },
+                        warnings: {
+                            area: inputs[2]?.classList.contains('warning') || false
+                        },
+                        errorMessages: {
+                            producerName: inputs[0]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                            placeRef: inputs[1]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                            area: inputs[2]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                            country: inputs[3]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                            latitude: inputs[4]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                            longitude: inputs[5]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                            polygon: inputs[6]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                            additional: inputs[7]?.parentNode.querySelector('.validation-tooltip')?.textContent || ''
+                        }
+                    };
+                }
+            });
+            
+            console.log(`Synced ${domRows.length} DOM rows to fullDataset before filtering`);
+            
+            currentRowFilter = filter;
+            localStorage.setItem('georoots-row-filter', filter);
+            
+            // Reset to page 1 and re-render
+            currentPage = 1;
+            renderCurrentPage();
+            
+            // Scroll back to top so user sees the filtered results
+            window.scrollTo(0, 0);
+            
+            console.log(`Filter applied: "${filter}", showing ${getFilteredIndices(filter).length} rows`);
+        }
+
+        /**
+         * Determine if a row (DOM element) should be shown based on filter
+         */
+        function shouldShowRow(row, filter) {
+            if (filter === 'all') return true;
+            
+            const inputs = row.querySelectorAll('.cell-input');
+            const hasError = Array.from(inputs).some(input => 
+                input.classList.contains('error') || input.classList.contains('unclosed')
+            );
+            
+            if (filter === 'errors') {
+                return hasError;
+            }
+            
+            if (filter === 'incomplete') {
+                // Check if row has data but is missing required fields
+                const data = {
+                    area: inputs[2]?.value.trim(),
+                    latitude: inputs[4]?.value.trim(),
+                    longitude: inputs[5]?.value.trim(),
+                    polygon: inputs[6]?.value.trim()
+                };
+                
+                const hasAnyData = Array.from(inputs).some(input => input.value.trim() !== '');
+                if (!hasAnyData) return false; // Skip completely empty rows
+                
+                // Row is incomplete if it has data but missing coordinates
+                const hasValidPoint = data.latitude && data.longitude && data.area &&
+                                      !inputs[4]?.classList.contains('error') &&
+                                      !inputs[5]?.classList.contains('error');
+                const hasValidPolygon = data.polygon && !inputs[6]?.classList.contains('error') &&
+                                         !inputs[6]?.classList.contains('unclosed');
+                
+                // Also incomplete if area > 4ha with lat/lng but no valid polygon (warning state)
+                const hasAreaWarning = inputs[2]?.classList.contains('warning');
+                
+                return !hasValidPoint && !hasValidPolygon || hasAreaWarning;
+            }
+            
+            return true;
+        }
+
+        /**
+         * Determine if a row (virtualData item) should be shown based on filter
+         */
+        function shouldShowRowData(rowData, filter) {
+            if (filter === 'all') return true;
+            
+            const errors = rowData.errors || {};
+            const hasError = Object.values(errors).some(e => e === true);
+            
+            if (filter === 'errors') {
+                return hasError;
+            }
+            
+            if (filter === 'incomplete') {
+                const hasAnyData = rowData.producerName || rowData.placeRef || rowData.area ||
+                                   rowData.country || rowData.latitude || rowData.longitude ||
+                                   rowData.polygon || rowData.additional;
+                
+                if (!hasAnyData) return false; // Skip completely empty rows
+                
+                // Row is incomplete if it has data but missing valid coordinates
+                const hasValidPoint = rowData.latitude && rowData.longitude && rowData.area &&
+                                      !errors.latitude && !errors.longitude;
+                const hasValidPolygon = rowData.polygon && !errors.polygon;
+                
+                // Also incomplete if area > 4ha with lat/lng but no valid polygon (warning state)
+                const warnings = rowData.warnings || {};
+                const hasAreaWarning = warnings.area === true;
+                
+                return !hasValidPoint && !hasValidPolygon || hasAreaWarning;
+            }
+            
+            return true;
+        }
+
+        // ===== PAGINATION SYSTEM =====
+
+        /**
+         * Sync DOM data to fullDataset array (single source of truth)
+         * WARNING: This clears fullDataset - only use when DOM contains ALL data
+         */
+        function syncDOMToDataset() {
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.children);
+            
+            fullDataset = []; // Clear and rebuild
+            
+            rows.forEach((row) => {
+                const inputs = row.querySelectorAll('.cell-input');
+                
+                fullDataset.push({
+                    producerName: inputs[0]?.value || '',
+                    placeRef: inputs[1]?.value || '',
+                    area: inputs[2]?.value || '',
+                    country: inputs[3]?.value || '',
+                    latitude: inputs[4]?.value || '',
+                    longitude: inputs[5]?.value || '',
+                    polygon: inputs[6]?.value || '',
+                    additional: inputs[7]?.value || '',
+                    polygonUnclosed: inputs[6]?.classList.contains('unclosed') || false,
+                    errors: {
+                        producerName: inputs[0]?.classList.contains('error') || false,
+                        placeRef: inputs[1]?.classList.contains('error') || false,
+                        area: inputs[2]?.classList.contains('error') || false,
+                        country: inputs[3]?.classList.contains('error') || false,
+                        latitude: inputs[4]?.classList.contains('error') || false,
+                        longitude: inputs[5]?.classList.contains('error') || false,
+                        polygon: inputs[6]?.classList.contains('error') || inputs[6]?.classList.contains('unclosed') || false,
+                        additional: inputs[7]?.classList.contains('error') || false
+                    },
+                    warnings: {
+                        area: inputs[2]?.classList.contains('warning') || false
+                    },
+                    errorMessages: {
+                        producerName: inputs[0]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        placeRef: inputs[1]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        area: inputs[2]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        country: inputs[3]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        latitude: inputs[4]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        longitude: inputs[5]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        polygon: inputs[6]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        additional: inputs[7]?.parentNode.querySelector('.validation-tooltip')?.textContent || ''
+                    }
+                });
+            });
+            
+            console.log(`syncDOMToDataset: Synced ${fullDataset.length} rows`);
+        }
+
+        /**
+         * Update specific rows in fullDataset from DOM without clearing other rows
+         * Use this when pasting to preserve data outside the paste range
+         * 
+         * @param {number} startDOMIndex - Starting DOM row index (0-based)
+         * @param {number} endDOMIndex - Ending DOM row index (exclusive)
+         */
+        function mergeDOMRowsToDataset(startDOMIndex, endDOMIndex) {
+            const tbody = document.getElementById('tableBody');
+            const domRows = Array.from(tbody.children);
+            
+            console.log(`mergeDOMRowsToDataset: Processing DOM rows ${startDOMIndex} to ${endDOMIndex - 1}`);
+            
+            // Update only the specific rows from DOM
+            for (let domIdx = startDOMIndex; domIdx < endDOMIndex && domIdx < domRows.length; domIdx++) {
+                const domRow = domRows[domIdx];
+                if (!domRow) {
+                    console.warn(`mergeDOMRowsToDataset: Missing DOM row at index ${domIdx}`);
+                    continue;
+                }
+                
+                // Read data-index attribute to know which fullDataset row this corresponds to
+                // This is crucial when pagination/filtering is active
+                const datasetIdx = parseInt(domRow.getAttribute('data-index'));
+                if (isNaN(datasetIdx)) {
+                    console.warn(`mergeDOMRowsToDataset: DOM row ${domIdx} missing data-index attribute, using DOM index as fallback`);
+                    continue;
+                }
+                
+                // Ensure fullDataset is large enough
+                while (fullDataset.length <= datasetIdx) {
+                    fullDataset.push({
+                        producerName: '',
+                        placeRef: '',
+                        area: '',
+                        country: '',
+                        latitude: '',
+                        longitude: '',
+                        polygon: '',
+                        additional: '',
+                        polygonUnclosed: false,
+                        errors: {
+                            producerName: false,
+                            placeRef: false,
+                            area: false,
+                            country: false,
+                            latitude: false,
+                            longitude: false,
+                            polygon: false,
+                            additional: false
+                        },
+                        warnings: {},
+                        errorMessages: {}
+                    });
+                }
+                
+                const inputs = domRow.querySelectorAll('.cell-input');
+                
+                fullDataset[datasetIdx] = {
+                    producerName: inputs[0]?.value || '',
+                    placeRef: inputs[1]?.value || '',
+                    area: inputs[2]?.value || '',
+                    country: inputs[3]?.value || '',
+                    latitude: inputs[4]?.value || '',
+                    longitude: inputs[5]?.value || '',
+                    polygon: inputs[6]?.value || '',
+                    additional: inputs[7]?.value || '',
+                    polygonUnclosed: inputs[6]?.classList.contains('unclosed') || false,
+                    errors: {
+                        producerName: inputs[0]?.classList.contains('error') || false,
+                        placeRef: inputs[1]?.classList.contains('error') || false,
+                        area: inputs[2]?.classList.contains('error') || false,
+                        country: inputs[3]?.classList.contains('error') || false,
+                        latitude: inputs[4]?.classList.contains('error') || false,
+                        longitude: inputs[5]?.classList.contains('error') || false,
+                        polygon: inputs[6]?.classList.contains('error') || inputs[6]?.classList.contains('unclosed') || false,
+                        additional: inputs[7]?.classList.contains('error') || false
+                    },
+                    warnings: {
+                        area: inputs[2]?.classList.contains('warning') || false
+                    },
+                    errorMessages: {
+                        producerName: inputs[0]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        placeRef: inputs[1]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        area: inputs[2]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        country: inputs[3]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        latitude: inputs[4]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        longitude: inputs[5]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        polygon: inputs[6]?.parentNode.querySelector('.validation-tooltip')?.textContent || '',
+                        additional: inputs[7]?.parentNode.querySelector('.validation-tooltip')?.textContent || ''
+                    }
+                };
+            }
+            
+            console.log(`mergeDOMRowsToDataset: Updated fullDataset from DOM rows ${startDOMIndex}-${endDOMIndex - 1}. fullDataset now has ${fullDataset.length} rows`);
+        }
+
+        /**
+         * Get filtered indices from fullDataset based on filter criteria
+         * Returns array of indices that match the filter
+         */
+        function getFilteredIndices(filter) {
+            if (filter === 'all') {
+                // Return all indices
+                return fullDataset.map((_, index) => index);
+            }
+            
+            const matchingIndices = [];
+            
+            fullDataset.forEach((rowData, index) => {
+                if (shouldShowRowData(rowData, filter)) {
+                    matchingIndices.push(index);
+                }
+            });
+            
+            return matchingIndices;
+        }
+
+        /**
+         * Get total number of pages based on current filter
+         */
+        function getPageCount() {
+            const filteredIndices = getFilteredIndices(currentRowFilter);
+            return Math.ceil(filteredIndices.length / pageSize);
+        }
+
+        /**
+         * Get data for a specific page
+         * Returns array of { dataIndex, rowData } objects
+         */
+        function getPageData(pageNum) {
+            const filteredIndices = getFilteredIndices(currentRowFilter);
+            const start = (pageNum - 1) * pageSize;
+            const end = start + pageSize;
+            const pageIndices = filteredIndices.slice(start, end);
+            
+            return pageIndices.map(idx => ({
+                dataIndex: idx,
+                rowData: fullDataset[idx]
+            }));
+        }
+
+        /**
+         * Adjust tooltip positions for tooltips near the bottom of container
+         */
+        function adjustTooltipPositions() {
+            const container = document.querySelector('.spreadsheet-container');
+            if (!container) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const tooltips = document.querySelectorAll('.validation-tooltip');
+            
+            tooltips.forEach(tooltip => {
+                const input = tooltip.previousElementSibling;
+                if (input && input.classList.contains('cell-input')) {
+                    const inputRect = input.getBoundingClientRect();
+                    const spaceBelow = containerRect.bottom - inputRect.bottom;
+                    
+                    // If less than 60px below, position above
+                    if (spaceBelow < 60) {
+                        tooltip.classList.add('above');
+                    } else {
+                        tooltip.classList.remove('above');
+                    }
+                }
+            });
+        }
+
+        /**
+         * Render current page to DOM
+         */
+        function renderCurrentPage() {
+            const tbody = document.getElementById('tableBody');
+            const pageData = getPageData(currentPage);
+            
+            tbody.innerHTML = '';
+            
+            pageData.forEach(({ dataIndex, rowData }) => {
+                // Use ORIGINAL row number (dataIndex + 1) from fullDataset
+                // Store dataIndex in data-index attribute for updates
+                tbody.insertAdjacentHTML('beforeend', createRowHtml(dataIndex + 1, rowData, dataIndex));
+            });
+            
+            updatePaginationUI();
+            adjustTooltipPositions(); // Adjust tooltip positions after rendering
+            
+            console.log(`Rendered page ${currentPage} with ${pageData.length} rows`);
+        }
+
+        /**
+         * Update pagination UI with smart pagination buttons
+         */
+        function updatePaginationUI() {
+            const paginationDiv = document.getElementById('paginationControls');
+            const totalPages = getPageCount();
+            
+            if (totalPages <= 1) {
+                paginationDiv.classList.add('hidden');
+                return;
+            }
+            
+            paginationDiv.classList.remove('hidden');
+            let html = '';
+            
+            // Previous button
+            html += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                &laquo; Prev
+            </button>`;
+            
+            // Smart pagination: show current ±2, first, last
+            const pages = [];
+            
+            // Always show first page
+            pages.push(1);
+            
+            // Show pages around current page
+            for (let i = Math.max(2, currentPage - 2); i <= Math.min(totalPages - 1, currentPage + 2); i++) {
+                pages.push(i);
+            }
+            
+            // Always show last page if more than 1 page
+            if (totalPages > 1) {
+                pages.push(totalPages);
+            }
+            
+            // Remove duplicates and sort
+            const uniquePages = [...new Set(pages)].sort((a, b) => a - b);
+            
+            // Build buttons with ellipsis
+            for (let i = 0; i < uniquePages.length; i++) {
+                const page = uniquePages[i];
+                
+                // Add ellipsis if gap
+                if (i > 0 && uniquePages[i] - uniquePages[i - 1] > 1) {
+                    html += '<span class="page-ellipsis">...</span>';
+                }
+                
+                const activeClass = page === currentPage ? 'active' : '';
+                html += `<button class="page-btn ${activeClass}" onclick="goToPage(${page})" ${page === currentPage ? 'disabled' : ''}>
+                    ${page}
+                </button>`;
+            }
+            
+            // Next button
+            html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                Next &raquo;
+            </button>`;
+            
+            paginationDiv.innerHTML = html;
+        }
+
+        /**
+         * Navigate to a specific page
+         */
+        function goToPage(pageNum) {
+            const totalPages = getPageCount();
+            if (pageNum < 1 || pageNum > totalPages) return;
+            
+            currentPage = pageNum;
+            renderCurrentPage();
+            
+            // Scroll to top when changing pages
+            window.scrollTo(0, 0);
+        }
+
+        /**
+         * Generate tooltip HTML for a field (hidden, shows on hover)
+         */
+        function getTooltipHtml(message) {
+            if (!message) return '';
+            // Escape HTML to prevent special characters from breaking the HTML
+            const escaped = message
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+            // Tooltip will be positioned above/below dynamically on first hover via CSS
+            return `<div class="validation-tooltip">${escaped}</div>`;
+        }
+
+        /**
+         * Create HTML for a single row with data
+         */
+        function createRowHtml(rowNumber, data = {}, dataIndex = null) {
+            const errorClasses = data.errors || {};
+            const warningClasses = data.warnings || {};
+            const errorMessages = data.errorMessages || {};
+            // Special handling for polygon unclosed state
+            const polygonClasses = errorClasses.polygon ? (data.polygonUnclosed ? 'unclosed' : 'error') : '';
+            // Special handling for area warning state (> 4ha without polygon)
+            const areaClasses = errorClasses.area ? 'error' : (warningClasses.area ? 'warning' : '');
+            
+            return `
+                <tr data-index="${dataIndex !== null ? dataIndex : (rowNumber - 1)}">
+                    <td class="row-number" onclick="selectRow(this)">${rowNumber}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${errorClasses.producerName ? 'error' : ''}" 
+                        data-col="producerName" value="${data.producerName || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.producerName)}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${errorClasses.placeRef ? 'error' : ''}" 
+                        data-col="placeRef" value="${data.placeRef || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.placeRef)}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${areaClasses}" 
+                        data-col="area" value="${data.area || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.area)}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${errorClasses.country ? 'error' : ''}" 
+                        data-col="country" value="${data.country || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.country)}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${errorClasses.latitude ? 'error' : ''}" 
+                        data-col="latitude" value="${data.latitude || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.latitude)}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${errorClasses.longitude ? 'error' : ''}" 
+                        data-col="longitude" value="${data.longitude || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.longitude)}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${polygonClasses}" 
+                        data-col="polygon" value="${data.polygon || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.polygon)}</td>
+                    <td style="position: relative;"><input type="text" class="cell-input ${errorClasses.additional ? 'error' : ''}" 
+                        data-col="additional" value="${data.additional || ''}" 
+                        oninput="validateCell(this)" onfocus="selectCell(this)" onpaste="handlePaste(event)" onkeydown="handleCellKeydown(event)">${getTooltipHtml(errorMessages.additional)}</td>
+                </tr>
+            `;
+        }
+
+
+        // Show validation tooltip (attached to input, shown on hover)
         function showTooltip(input, message) {
             hideTooltip(input); // Remove existing tooltip
             
             const tooltip = document.createElement('div');
-            tooltip.className = 'validation-tooltip show';
+            tooltip.className = 'validation-tooltip';
             tooltip.textContent = message;
             
+            // Ensure parent cell has relative positioning
             input.parentNode.style.position = 'relative';
-            input.parentNode.appendChild(tooltip);
             
-            setTimeout(() => tooltip.classList.add('show'), 10);
+            // Check if tooltip would be cut off at the bottom
+            const inputRect = input.getBoundingClientRect();
+            const container = document.querySelector('.spreadsheet-container');
+            
+            if (container) {
+                const containerRect = container.getBoundingClientRect();
+                const spaceBelow = containerRect.bottom - inputRect.bottom;
+                
+                // If less than 60px below in the container, position tooltip above
+                if (spaceBelow < 60) {
+                    tooltip.classList.add('above');
+                }
+            } else {
+                // Fallback to viewport if container not found
+                const viewportHeight = window.innerHeight;
+                const spaceBelow = viewportHeight - inputRect.bottom;
+                
+                if (spaceBelow < 60) {
+                    tooltip.classList.add('above');
+                }
+            }
+            
+            // Insert tooltip after the input (as sibling)
+            input.parentNode.appendChild(tooltip);
         }
 
         // Hide validation tooltip
@@ -1582,6 +4006,36 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         function insertRow() {
             saveUndoState();
             
+            if (fullDataset.length > 0) {
+                // Using pagination - insert into fullDataset
+                if (selectedRow) {
+                    const dataIndex = parseInt(selectedRow.getAttribute('data-index'));
+                    if (!isNaN(dataIndex)) {
+                        // Insert empty row after selected row
+                        const emptyRow = {
+                            producerName: '',
+                            placeRef: '',
+                            area: '',
+                            country: '',
+                            latitude: '',
+                            longitude: '',
+                            polygon: '',
+                            additional: '',
+                            polygonUnclosed: false,
+                            errors: {},
+                            warnings: {},
+                            errorMessages: {}
+                        };
+                        fullDataset.splice(dataIndex + 1, 0, emptyRow);
+                        renderCurrentPage();
+                        showStatus(getText('rowInsertedSuccessfully'), 'success');
+                    }
+                } else {
+                    addEmptyRow();
+                    showStatus(getText('newRowAdded'), 'success');
+                }
+            } else {
+                // No pagination - use DOM manipulation
             if (selectedRow) {
                 const tbody = document.getElementById('tableBody');
                 const newRow = selectedRow.cloneNode(true);
@@ -1597,14 +4051,43 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             } else {
                 addEmptyRow();
                 showStatus(getText('newRowAdded'), 'success');
+                }
             }
         }
 
         // Delete selected row
         function deleteSelectedRow() {
-            if (selectedRow) {
+            if (!selectedRow) {
+                showStatus(getText('pleaseSelectRowToDelete'), 'info');
+                return;
+            }
+            
                 saveUndoState();
                 
+            if (fullDataset.length > 0) {
+                // Using pagination - delete from fullDataset
+                if (fullDataset.length <= 1) {
+                    showStatus(getText('cannotDeleteLastRow'), 'error');
+                    return;
+                }
+                
+                const dataIndex = parseInt(selectedRow.getAttribute('data-index'));
+                if (!isNaN(dataIndex) && dataIndex < fullDataset.length) {
+                    fullDataset.splice(dataIndex, 1);
+                    
+                    // If we deleted the last row on current page and not on page 1, go to previous page
+                    const pageData = getPageData(currentPage);
+                    if (pageData.length === 0 && currentPage > 1) {
+                        currentPage--;
+                    }
+                    
+                    renderCurrentPage();
+                    selectedRow = null;
+                    selectedCell = null;
+                    showStatus(getText('rowDeletedSuccessfully'), 'success');
+                }
+            } else {
+                // No pagination - use DOM manipulation
                 const tbody = document.getElementById('tableBody');
                 if (tbody.children.length > 1) {
                     selectedRow.remove();
@@ -1615,70 +4098,89 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                 } else {
                     showStatus(getText('cannotDeleteLastRow'), 'error');
                 }
-            } else {
-                showStatus(getText('pleaseSelectRowToDelete'), 'info');
             }
         }
 
         // Clear all rows
         function clearAllRows() {
             if (confirm(getText('confirmClearAll'))) {
-                saveUndoState();
-                
-                const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = '';
-                initializeTable();
-                selectedRow = null;
-                selectedCell = null;
-                showStatus(getText('allDataCleared'), 'success');
+                // Simply refresh the page to clear all memory
+                // This completely wipes: fullDataset, Web Worker, blob URLs, DOM elements, closures
+                // User settings (language, polygon format) are preserved in localStorage
+                window.location.reload();
             }
         }
 
         /**
          * Finds all rows that are not empty but have validation errors or incomplete data.
-         * @returns {number[]} An array of invalid row numbers.
+         * Checks the entire fullDataset, not just visible DOM rows.
+         * @returns {number[]} An array of invalid row numbers (1-based, from full dataset).
          */
         function findAllInvalidRows() {
-            const rows = Array.from(document.getElementById('tableBody').children);
-            const invalidRows = [];
-
-            rows.forEach(row => {
+            // Clear any previous highlighting on visible rows
+            const visibleRows = Array.from(document.getElementById('tableBody').children);
+            visibleRows.forEach(row => {
                 row.querySelector('.row-number').style.backgroundColor = '';
             });
 
-            rows.forEach((row, index) => {
-                const inputs = row.querySelectorAll('.cell-input');
-                const data = {
-                    area: inputs[2].value.trim(),      // Index updated
-                    latitude: inputs[4].value.trim(),   // Index updated
-                    longitude: inputs[5].value.trim(),  // Index updated
-                    polygon: inputs[6].value.trim(),    // Index updated
-                };
+            const invalidRows = [];
 
-                const isRowEmpty = Array.from(inputs).every(input => input.value.trim() === '');
+            // Check fullDataset if available, otherwise fall back to DOM
+            const dataSource = fullDataset.length > 0 ? fullDataset : visibleRows;
+
+            dataSource.forEach((rowDataOrElement, index) => {
+                let data, errors;
+                
+                if (fullDataset.length > 0) {
+                    // Using fullDataset
+                    data = rowDataOrElement;
+                    errors = rowDataOrElement.errors || {};
+                } else {
+                    // Fall back to DOM (legacy support)
+                    const inputs = rowDataOrElement.querySelectorAll('.cell-input');
+                    data = {
+                        area: inputs[2]?.value.trim(),
+                        latitude: inputs[4]?.value.trim(),
+                        longitude: inputs[5]?.value.trim(),
+                        polygon: inputs[6]?.value.trim(),
+                    };
+                    // Check for error classes in DOM
+                    errors = {
+                        area: inputs[2]?.classList.contains('error'),
+                        latitude: inputs[4]?.classList.contains('error'),
+                        longitude: inputs[5]?.classList.contains('error'),
+                        polygon: inputs[6]?.classList.contains('error') || inputs[6]?.classList.contains('unclosed'),
+                    };
+                }
+
+                // Skip empty rows
+                const isRowEmpty = !data.producerName && !data.placeRef && !data.area && 
+                                   !data.country && !data.latitude && !data.longitude && 
+                                   !data.polygon && !data.additional;
                 if (isRowEmpty) {
                     return;
                 }
 
                 let isRowValid = true;
                 
-                if (row.querySelector('.cell-input.error')) {
+                // Check if any field has errors
+                if (errors.producerName || errors.placeRef || errors.area || errors.country ||
+                    errors.latitude || errors.longitude || errors.polygon) {
                     isRowValid = false;
                 }
 
+                // Check if row has valid coordinates
                 const hasValidPoint = data.latitude && data.longitude && data.area &&
-                                      !inputs[4].classList.contains('error') &&
-                                      !inputs[5].classList.contains('error') &&
-                                      !inputs[2].classList.contains('error');
+                                      !errors.latitude && !errors.longitude && !errors.area;
 
-                const hasValidPolygon = data.polygon && !inputs[6].classList.contains('error');
+                const hasValidPolygon = data.polygon && !errors.polygon;
 
                 if (!hasValidPoint && !hasValidPolygon) {
                     isRowValid = false;
                 }
 
                 if (!isRowValid) {
-                    invalidRows.push(index + 1);
+                    invalidRows.push(index + 1); // 1-based row number
                 }
             });
 
@@ -1688,43 +4190,112 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         // Export data as GeoJSON
         function exportGeoJSON() {
             const invalidRowNumbers = findAllInvalidRows();
+            let warnings = [];
 
-            if (invalidRowNumbers.length > 0) {
+            // Check for rows with missing area
+            const allRows = fullDataset.length > 0 ? fullDataset : Array.from(document.getElementById('tableBody').children);
+            
+            allRows.forEach((rowDataOrElement, index) => {
+                let area, polygon, latitude, longitude;
+                
+                if (fullDataset.length > 0) {
+                    area = rowDataOrElement.area;
+                    polygon = rowDataOrElement.polygon;
+                    latitude = rowDataOrElement.latitude;
+                    longitude = rowDataOrElement.longitude;
+                } else {
+                    const inputs = rowDataOrElement.querySelectorAll('.cell-input');
+                    area = inputs[2]?.value.trim();
+                    polygon = inputs[6]?.value.trim();
+                    latitude = inputs[4]?.value.trim();
+                    longitude = inputs[5]?.value.trim();
+                }
+                
+                const hasData = area || polygon || latitude || longitude;
+                if (hasData && !area) {
+                    warnings.push(index + 1);
+                }
+            });
+
+            if (invalidRowNumbers.length > 0 || warnings.length > 0) {
+                // Navigate to the page containing the first error
+                const firstInvalidRowNum = invalidRowNumbers[0] || warnings[0];
+                const errorPage = Math.ceil(firstInvalidRowNum / pageSize);
+                
+                // Switch to that page if not already there
+                if (errorPage !== currentPage) {
+                    currentPage = errorPage;
+                    applyRowFilter(currentRowFilter);
+                }
+                
+                // Now highlight the errors on the current page
                 invalidRowNumbers.forEach(rowNum => {
-                    const row = document.querySelector(`#tableBody tr:nth-child(${rowNum})`);
-                    if (row) {
-                        row.querySelector('.row-number').style.backgroundColor = '#f8d7da';
+                    // Calculate which position this row would be on the current page
+                    const pageStartRow = (currentPage - 1) * pageSize + 1;
+                    const pageEndRow = currentPage * pageSize;
+                    
+                    if (rowNum >= pageStartRow && rowNum <= pageEndRow) {
+                        const positionOnPage = rowNum - pageStartRow + 1;
+                        const row = document.querySelector(`#tableBody tr:nth-child(${positionOnPage})`);
+                        if (row) {
+                            row.querySelector('.row-number').style.backgroundColor = '#f8d7da';
+                        }
                     }
                 });
 
-                const firstInvalidRow = document.querySelector(`#tableBody tr:nth-child(${invalidRowNumbers[0]})`);
-                if (firstInvalidRow) {
-                    firstInvalidRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Scroll to the first invalid row on current page
+                const pageStartRow = (currentPage - 1) * pageSize + 1;
+                if (firstInvalidRowNum >= pageStartRow && firstInvalidRowNum <= currentPage * pageSize) {
+                    const positionOnPage = firstInvalidRowNum - pageStartRow + 1;
+                    const firstInvalidRow = document.querySelector(`#tableBody tr:nth-child(${positionOnPage})`);
+                    if (firstInvalidRow) {
+                        firstInvalidRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
                 
-                const confirmationMessage = getText('confirmExportWithErrors', {
-                    count: invalidRowNumbers.length,
-                    rows: invalidRowNumbers.join(', ')
-                });
+                let confirmationMessage = '';
+                if (invalidRowNumbers.length > 0) {
+                    // Show only first 10 row numbers to avoid overwhelming the user
+                    const displayRows = invalidRowNumbers.slice(0, 10).join(', ');
+                    const moreCount = invalidRowNumbers.length > 10 ? ` (and ${invalidRowNumbers.length - 10} more)` : '';
+                    confirmationMessage = getText('confirmExportWithErrors', {
+                        count: invalidRowNumbers.length,
+                        rows: displayRows + moreCount
+                    });
+                } else if (warnings.length > 0) {
+                    // Show only first 10 row numbers to avoid overwhelming the user
+                    const displayRows = warnings.slice(0, 10).join(', ');
+                    const moreCount = warnings.length > 10 ? ` (and ${warnings.length - 10} more)` : '';
+                    confirmationMessage = getText('confirmExportWithWarnings', {
+                        count: warnings.length,
+                        rows: displayRows + moreCount
+                    });
+                }
 
-                if (!confirm(confirmationMessage)) {
+                if (confirmationMessage && !confirm(confirmationMessage)) {
                     showStatus(getText('exportCancelled'), 'info');
-                    invalidRowNumbers.forEach(rowNum => {
-                       const row = document.querySelector(`#tableBody tr:nth-child(${rowNum})`);
-                       if (row) row.querySelector('.row-number').style.backgroundColor = '';
+                    // Clear highlighting
+                    const visibleRows = Array.from(document.getElementById('tableBody').children);
+                    visibleRows.forEach(row => {
+                        row.querySelector('.row-number').style.backgroundColor = '';
                     });
                     return; 
                 }
             }
 
             const tbody = document.getElementById('tableBody');
-            const rows = Array.from(tbody.children);
+            const rows = fullDataset.length > 0 ? fullDataset : Array.from(tbody.children);
             const features = [];
             let nonEmptyRowCount = 0;
             
-            rows.forEach((row, index) => {
-                const inputs = row.querySelectorAll('.cell-input');
-                const data = {
+            rows.forEach((rowDataOrElement, index) => {
+                let data;
+                
+                if (fullDataset.length > 0) {
+                    data = rowDataOrElement;
+                } else {
+                    const inputs = rowDataOrElement.querySelectorAll('.cell-input');
+                    data = {
                     producerName: inputs[0].value.trim(),
                     placeRef: inputs[1].value.trim(),
                     area: inputs[2].value.trim(),
@@ -1734,6 +4305,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                     polygon: inputs[6].value.trim(),
                     additional: inputs[7].value.trim()
                 };
+                }
                 
                 if (Object.values(data).some(val => val !== '')) {
                     nonEmptyRowCount++;
@@ -1742,18 +4314,55 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                 }
                 
                 let geometry = null;
+                let metadata = {};
                 
-                if (data.polygon && !inputs[6].classList.contains('error')) {
-                    try {
-                        const coordinates = JSON.parse(data.polygon);
-                        if (Array.isArray(coordinates) && coordinates.length >= 3) {
-                            geometry = { type: "Polygon", coordinates: [coordinates] };
+                // Try to parse polygon using parsers
+                if (data.polygon) {
+                    const parsed = parsePolygon(data.polygon, currentPolygonFormat);
+                    
+                    if (parsed.isValid) {
+                        // Build proper GeoJSON geometry
+                        if (parsed.type === 'Point') {
+                            geometry = {
+                                type: "Point",
+                                coordinates: parsed.coordinates
+                            };
+                        } else if (parsed.type === 'MultiPoint') {
+                            geometry = {
+                                type: "MultiPoint",
+                                coordinates: parsed.coordinates
+                            };
+                        } else if (parsed.type === 'Polygon') {
+                            geometry = {
+                                type: "Polygon",
+                                coordinates: parsed.coordinates
+                            };
+                        } else if (parsed.type === 'MultiPolygon') {
+                            geometry = {
+                                type: "MultiPolygon",
+                                coordinates: parsed.coordinates
+                            };
                         }
-                    } catch (e) { /* ignore */ }
-                } else if (data.latitude && data.longitude && data.area &&
-                           !inputs[4].classList.contains('error') &&
-                           !inputs[5].classList.contains('error') &&
-                           !inputs[2].classList.contains('error')) {
+                        
+                        // Extract metadata if present (from Kobo format)
+                        if (parsed.metadata) {
+                            const validAltitudes = parsed.metadata.altitudes.filter(alt => alt > 0);
+                            if (validAltitudes.length > 0) {
+                                metadata.averageAltitude = Math.round(
+                                    validAltitudes.reduce((sum, alt) => sum + alt, 0) / validAltitudes.length
+                                );
+                            }
+                            
+                            const validAccuracies = parsed.metadata.accuracies.filter(acc => acc > 0);
+                            if (validAccuracies.length > 0) {
+                                metadata.maxAccuracy = Math.round(Math.max(...validAccuracies) * 100) / 100;
+                            }
+                        }
+                    }
+                }
+                
+                // Fall back to point geometry if no polygon
+                if (!geometry && data.latitude && data.longitude) {
                     const lat = parseFloat(data.latitude);
                     const lng = parseFloat(data.longitude);
                     if (!isNaN(lat) && !isNaN(lng)) {
@@ -1765,9 +4374,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                     const properties = {};
                     if (data.producerName) properties.ProducerName = data.producerName;
                     if (data.placeRef) properties.ProductionPlace = data.placeRef;
-                    if (data.area) properties.Area = parseFloat(data.area);
+                    
+                    // Include area even if empty (relaxed validation)
+                    if (data.area) {
+                        properties.Area = parseFloat(data.area);
+                    }
+                    
                     if (data.country) properties.ProducerCountry = data.country;
                     if (data.additional) properties.AdditionalInfo = data.additional;
+                    
+                    // Add metadata from Kobo format
+                    if (metadata.averageAltitude !== undefined) {
+                        properties.Altitude = metadata.averageAltitude;
+                    }
+                    if (metadata.maxAccuracy !== undefined) {
+                        properties.Accuracy = metadata.maxAccuracy;
+                    }
 
 					const feature = {
 						type: "Feature",
@@ -1826,6 +4448,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         function initializeApp() {
             initializeTranslations();
             
+            // Initialize validation worker early
+            createValidationWorker();
+            
+            // Load saved language
             const savedLanguage = localStorage.getItem('georoots-language');
             const browserLanguage = navigator.language.split('-')[0];
             const defaultLanguage = savedLanguage || (translations[browserLanguage] ? browserLanguage : 'en');
@@ -1833,14 +4459,51 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             document.getElementById('languageSelect').value = defaultLanguage;
             changeLanguage(defaultLanguage);
             
+            // Load saved polygon format
+            const savedFormat = localStorage.getItem('georoots-polygon-format');
+            if (savedFormat) {
+                currentPolygonFormat = savedFormat;
+                const formatSelect = document.getElementById('polygonFormatSelect');
+                if (formatSelect) {
+                    formatSelect.value = savedFormat;
+                }
+            }
+            
+            // Check if this is initial load (no data in table)
             const tbody = document.getElementById('tableBody');
-            if (tbody.children.length <= 1 && tbody.querySelector('input').value === '') {
+            const isInitialLoad = fullDataset.length === 0;
+            
+            // Always initialize table with 10 empty rows on initial load
+            if (isInitialLoad) {
                 tbody.innerHTML = '';
+                currentRowFilter = 'all'; // Force "Show All" on initial load
                 initializeTable();
+                
+                // Reset filter dropdown to "all"
+                const filterSelect = document.getElementById('rowFilterSelect');
+                if (filterSelect) {
+                    filterSelect.value = 'all';
+                }
+                
+                // Clear saved filter so it doesn't auto-apply on initial load
+                localStorage.setItem('georoots-row-filter', 'all');
+                
+                console.log('Initial load: Table initialized with 10 empty rows');
+            } else {
+                // Not initial load - restore saved filter if any
+                const savedFilter = localStorage.getItem('georoots-row-filter');
+                if (savedFilter) {
+                    currentRowFilter = savedFilter;
+                    const filterSelect = document.getElementById('rowFilterSelect');
+                    if (filterSelect) {
+                        filterSelect.value = savedFilter;
+                    }
+                }
             }
             
             setupEventListeners();
             initializeBackToTopButton();
+            updatePolygonFormatHint();
         }
 
         // Setup keyboard shortcuts and other event listeners

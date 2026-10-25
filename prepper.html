@@ -790,6 +790,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                     <option value="en">English</option>
                     <option value="es">Español</option>
                     <option value="fr">Français</option>
+                        <option value="cs">Čeština</option>
                     <option value="pt">Português</option>
                     <option value="sw">Swahili</option>
                     <option value="zh">中文</option>
@@ -1144,6 +1145,88 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
         "filterShowIncomplete": "Afficher Incomplets",
         "virtualScrollEnabled": "Défilement virtuel activé pour grand ensemble de données"
     }
+    </script>
+
+    <script type="application/json" id="lang-cs">
+{
+    "pageTitle": "GeoRoots Prepper – generátor GeoJSON pro nařízení EU proti odlesňování",
+    "title": "GeoRoots Prepper",
+    "subtitle": "Generátor GeoJSON pro nařízení EU proti odlesňování",
+    "privacy": "Váš soubor a jeho obsah jsou zpracovávány pouze lokálně ve vašem prohlížeči a žádné informace nejsou odesílány GeoRoots ani nikomu jinému.",
+    "license": "Tento software je zdarma, vydaný pod open source licencí GPLv3, úplné prohlášení naleznete ve zdrojovém kódu.",
+    "downloadLatest": "Stáhněte nejnovější verzi a další nástroje na",
+    "exportButton": "Exportovat GeoJSON",
+    "clearButton": "Vymazat všechny řádky",
+    "insertButton": "Vložit řádek",
+    "deleteButton": "Smazat řádek",
+    "producerNameHeader": "Název výrobce",
+    "placeRefHeader": "Popis místa produkce",
+    "areaHeader": "Plocha [ha]",
+    "countryHeader": "Země",
+    "latHeader": "Zeměpisná šířka",
+    "lngHeader": "Zeměpisná délka",
+    "polygonHeader": "Polygon",
+    "additionalHeader": "Dodatečné informace",
+    "instructionsTitle": "Pokyny:",
+    "pasteDataLabel": "Vložit data:",
+    "pasteDataText": "Klikněte na libovolnou buňku a vložte data ze schránky (Ctrl+V). Data se vyplní od vybrané buňky dále.",
+    "areaLabel": "Plocha:",
+    "areaText": "Zadejte pouze číselné hodnoty (např. 12.5). Plochy >4 ha vyžadují data typu polygon.",
+    "countryLabel": "Země:",
+    "countryText": "Používejte pouze 2písmenné kódy (např. CO, US, CN, BR).",
+    "coordinatesLabel": "Souřadnice:",
+    "coordinatesText": "Zadejte pouze čísla (např. -13.123, ne -13.123°).",
+    "polygonFormatLabel": "Formát polygonu:",
+    "polygonFormatText": "Použijte formát JSON pole: [[lng,lat],[lng,lat],[lng,lat]]",
+    "undoLabel": "Zpět:",
+    "undoText": "Stiskněte Ctrl+Z pro vrácení posledního vložení.",
+    "exportLabel": "Export:",
+    "exportText": "Klikněte na „Exportovat GeoJSON“ pro stažení dat ve formátu nařízení EU proti odlesňování.",
+    "noUndoState": "Není k dispozici žádný stav pro vrácení!",
+    "undoSuccessful": "Vrácení bylo úspěšné!",
+    "dataPastedSuccessfully": "Data byla úspěšně vložena!",
+    "noDataToPaste": "Žádná data k vložení",
+    "pasteDisabledInFilterMode": "Vložení je v režimu filtrování zakázáno. Před vložením přepněte na „Zobrazit vše“.",
+    "pastingData": "Vkládání dat, čekejte prosím...",
+    "validatingData": "Ověřování dat, čekejte prosím...",
+    "areaNumericError": "Plocha musí být pouze číselná (např. 12.5)",
+    "areaPolygonRequired": "Plochy ≥4 ha vyžadují platná data polygonu",
+    "countryCodeError": "Musí být 2písmenný kód země (např. CO, US, CN)",
+    "latitudeNumericError": "Zeměpisná šířka musí být pouze číselná (např. -13.123)",
+    "latitudeRangeError": "Zeměpisná šířka musí být mezi -90 a 90",
+    "longitudeNumericError": "Zeměpisná délka musí být pouze číselná (např. 12.456)",
+    "longitudeRangeError": "Zeměpisná délka musí být mezi -180 a 180",
+    "polygonFormatError": "Polygon musí být platné JSON pole: [[lng,lat],[lng,lat],...]",
+    "rowInsertedSuccessfully": "Řádek byl úspěšně vložen!",
+    "newRowAdded": "Nový řádek byl přidán!",
+    "rowDeletedSuccessfully": "Řádek byl úspěšně smazán!",
+    "cannotDeleteLastRow": "Nelze smazat poslední řádek!",
+    "pleaseSelectRowToDelete": "Prosím vyberte řádek ke smazání!",
+    "confirmClearAll": "Opravdu chcete vymazat všechna data?",
+    "allDataCleared": "Všechna data byla vymazána!",
+    "noValidDataToExport": "Žádná platná data k exportu!",
+    "geojsonExportedWithFeatures": "GeoJSON exportován s {count} objekty!",
+    "confirmExportWithErrors": "Nalezeny chyby v {count} řádcích: {rows}.\n\nTo může být způsobeno neúplnými daty (např. chybějící šířka/délka/plocha) nebo neplatnými formáty.\n\nChcete exportovat pouze platné řádky?",
+    "confirmExportWithWarnings": "Nalezeno {count} řádků s chybějící plochou: {rows}.\n\nPole plochy chybí, ale řádky budou exportovány.\n\nPokračovat v exportu?",
+    "exportCancelled": "Export zrušen uživatelem.",
+    "geojsonExportedWithSkips": "GeoJSON exportován s {count} objekty. {skippedCount} řádků s chybami bylo přeskočeno.",
+    "polygonFormatJSON": "JSON pole",
+    "polygonFormatKobo": "Formát Kobo",
+    "polygonFormatWKT": "WKT",
+    "polygonFormatLatLng": "Dvojice Lat-Lng",
+    "polygonFormatText_json": "Použijte formát JSON pole: [[lng,lat],[lng,lat],...] nebo [[[lng,lat],...]] pro polygony",
+    "polygonFormatText_kobo": "Použijte formát Kobo: lat lng alt acc;lat lng alt acc;... (např. 2.601 -76.482 2030.6 2.568;2.602 -76.482 2021.6 2.418)",
+    "polygonFormatText_wkt": "Použijte formát WKT: POINT(), POLYGON(), MULTIPOLYGON() (např. POLYGON((lng lat, lng lat, ...)))",
+    "polygonFormatText_latlng": "Použijte dvojice Lat-Lng: lat,lng;lat,lng;... nebo lat lng;lat lng;...",
+    "closePolygonsButton": "Uzavřít všechny polygony",
+    "polygonsClosedSuccess": "{count} polygon(ů) bylo úspěšně uzavřeno!",
+    "noPolygonsToClosed": "Nebyly nalezeny žádné neuzavřené polygony.",
+    "polygonNotClosed": "Polygon není uzavřen (první a poslední body se musí shodovat)",
+    "filterShowAll": "Zobrazit vše",
+    "filterShowErrors": "Zobrazit chyby",
+    "filterShowIncomplete": "Zobrazit neúplné",
+    "virtualScrollEnabled": "Virtuální posouvání povoleno pro velký dataset"
+}
     </script>
 
     <script type="application/json" id="lang-pt">
@@ -1662,6 +1745,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
                 const enScript = document.getElementById('lang-en');
                 const esScript = document.getElementById('lang-es');
                 const frScript = document.getElementById('lang-fr');
+                const csScript = document.getElementById('lang-cs');
                 const ptScript = document.getElementById('lang-pt');
                 const swScript = document.getElementById('lang-sw');
                 const zhScript = document.getElementById('lang-zh');
@@ -1671,6 +1755,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             translations.en = JSON.parse(enScript.textContent);
             translations.es = JSON.parse(esScript.textContent);
             translations.fr = JSON.parse(frScript.textContent);
+            translations.cs = JSON.parse(csScript.textContent);
             translations.pt = JSON.parse(ptScript.textContent);
             translations.sw = JSON.parse(swScript.textContent);
             translations.zh = JSON.parse(zhScript.textContent);
